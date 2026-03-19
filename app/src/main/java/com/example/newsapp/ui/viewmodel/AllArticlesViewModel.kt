@@ -40,6 +40,8 @@ class AllArticlesViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
+    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val snackbarMessages = _snackbarMessages.asSharedFlow()
 
     val userPreferences: StateFlow<UserPreferences> =
         observeUserPreferencesUseCase()
@@ -51,7 +53,15 @@ class AllArticlesViewModel @Inject constructor(
 
     private val searchQueryForRepo: Flow<String?> =
         _searchQuery
-            .map { it.trim() }
+            .map { raw ->
+                val trimmed = raw.trim()
+                // FTS MATCH is sensitive to query syntax. Keep it simple: allow letters/numbers/spaces.
+                val normalized = trimmed
+                    .replace(Regex("[^\\p{L}\\p{N} ]+"), " ")
+                    .replace(Regex("\\s+"), " ")
+                    .trim()
+                normalized
+            }
             .debounce(300)
             .distinctUntilChanged()
             .map { it.ifBlank { null } }
@@ -60,10 +70,6 @@ class AllArticlesViewModel @Inject constructor(
         searchQueryForRepo
             .flatMapLatest { query -> getArticlesUseCase(query) }
             .cachedIn(viewModelScope)
-
-    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val snackbarMessages = _snackbarMessages.asSharedFlow()
-
     fun onSearchQueryChanged(query: String) {
         _searchQuery.update { query }
     }

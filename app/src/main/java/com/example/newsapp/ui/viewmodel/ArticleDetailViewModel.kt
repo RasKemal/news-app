@@ -8,6 +8,7 @@ import com.example.newsapp.domain.usecase.GetArticleDetailUseCase
 import com.example.newsapp.domain.usecase.ToggleFavoriteUseCase
 import com.example.newsapp.ui.state.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ class ArticleDetailViewModel @Inject constructor(
 
     private val _articleId = MutableStateFlow<Long?>(null)
     private val _retryToken = MutableStateFlow(0)
+    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
     val detailUiState: StateFlow<UiState<Article>> =
         combine(_articleId, _retryToken) { id, _ -> id }
@@ -51,9 +53,6 @@ class ArticleDetailViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = UiState.Loading
             )
-
-    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val snackbarMessages = _snackbarMessages.asSharedFlow()
 
     fun setArticleId(id: Long) {
         _articleId.value = id

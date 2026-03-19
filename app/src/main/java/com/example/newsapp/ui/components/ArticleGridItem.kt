@@ -10,15 +10,21 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.newsapp.R
 import com.example.newsapp.domain.model.Article
 
 @Composable
@@ -34,6 +40,7 @@ fun ArticleGridItem(
             .clickable { onClick() }
     ) {
         Column {
+            // --- IMAGE SECTION ---
             if (!article.imageUrl.isNullOrBlank()) {
                 Box(
                     modifier = Modifier
@@ -49,13 +56,17 @@ fun ArticleGridItem(
                     )
                 }
             }
+
+            // --- TEXT SECTION ---
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = article.title,
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 3, 
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = article.summary,
@@ -63,32 +74,45 @@ fun ArticleGridItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                // --- METADATA & PIN ICON ROW ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom // Aligns the pin neatly with the text
                 ) {
-                    Column {
+                    Column(
+                        modifier = Modifier.weight(1f) // Prevents long site names from squishing the pin
+                    ) {
                         Text(
                             text = article.newsSite.orEmpty(),
-                            style = MaterialTheme.typography.labelSmall
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (!article.publishedAt.isNullOrBlank()) {
                             Text(
                                 text = article.publishedAt,
-                                style = MaterialTheme.typography.labelSmall
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    Text(
-                        text = if (article.isFavorite) "★" else "☆",
-                        color = if (article.isFavorite) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clickable { onToggleFavorite() }
-                            .then(Modifier),
-                        // size controlled by font size; using labelLarge-like sizing
-                    )
+
+                    IconButton(
+                        onClick = onToggleFavorite,
+                         modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (article.isFavorite) R.drawable.pin_filled else R.drawable.pin_outlined
+                            ),
+                            contentDescription = if (article.isFavorite) "Unpin article" else "Pin article",
+                            tint = if (article.isFavorite) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            modifier = Modifier.size(24.dp) // Standard icon size
+                        )
+                    }
                 }
             }
         }

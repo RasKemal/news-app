@@ -11,12 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -30,9 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,7 +35,6 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.res.painterResource
 import com.example.newsapp.R
 import kotlinx.coroutines.flow.Flow
@@ -79,14 +72,6 @@ fun ArticleListPane(
 
     val refreshErrorMessage = (refreshState as? LoadState.Error)?.error?.message
         ?: "Failed to load articles"
-
-    // IMPORTANT: show loading whenever Paging is refreshing, even if itemCount temporarily hits 0.
-    // This prevents the "loading -> empty -> loading" flicker on start.
-    val listUiState: UiState<Unit> = when (refreshState) {
-        is LoadState.Loading -> UiState.Loading
-        is LoadState.Error -> UiState.Error(refreshErrorMessage)
-        else -> UiState.Success(Unit)
-    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Header
@@ -199,35 +184,19 @@ fun ArticleListPane(
         }
 
         // Body
-        when (listUiState) {
-            is UiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-            is UiState.Error -> {
-                val message = (listUiState as UiState.Error).message
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = message, style = MaterialTheme.typography.bodyMedium)
-                        Button(
-                            onClick = { items.retry() },
-                            modifier = Modifier.padding(top = 16.dp)
-                        ) {
-                            Text("Retry")
-                        }
-                    }
-                }
-            }
-            is UiState.Success -> {
-                if (refreshState is LoadState.Error && !isEmpty) {
+        val appendState = items.loadState.append
+
+        when {
+            // If we already have items: always render list/grid; show loading/error as small inline UI.
+            items.itemCount > 0 -> {
+                if (refreshState is LoadState.Error) {
                     Text(
                         text = refreshErrorMessage,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
                 }
-                if (refreshState is LoadState.Loading && !isEmpty) {
+                if (refreshState is LoadState.Loading) {
                     Text(
                         text = "Refreshing...",
                         style = MaterialTheme.typography.bodySmall,
@@ -235,26 +204,15 @@ fun ArticleListPane(
                     )
                 }
 
-                if (items.itemCount == 0) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        // For "All" tab we keep a spinner while paging stabilizes,
-                        // since "real empty" is unlikely with offline-first + mediator.
-                        if (tab == Tab.FAVORITES) {
-                            Text(
-                                text = "No favorites yet",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        } else {
-                            CircularProgressIndicator()
-                        }
-                    }
-                } else if (prefs.articleListLayout == ArticleListLayout.LIST) {
+                if (prefs.articleListLayout == ArticleListLayout.LIST) {
                     val appendState = items.loadState.append
                     val showAppendLoading = appendState is LoadState.Loading
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(
                             count = items.itemCount,
-                            key = { index -> items[index]?.id ?: index }
+                            // Use a stable key that doesn't change as an item transitions
+                            // from null->loaded during paging.
+                            key = { index -> index }
                         ) { index ->
                             val article = items[index] ?: return@items
                             ArticleListItem(
@@ -279,7 +237,6 @@ fun ArticleListPane(
                 } else {
                     val appendState = items.loadState.append
                     val showAppendLoading = appendState is LoadState.Loading
-                    val gridCount = items.itemCount + if (showAppendLoading) 1 else 0
                     LazyVerticalStaggeredGrid(
                         columns = StaggeredGridCells.Fixed(2),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
@@ -288,13 +245,21 @@ fun ArticleListPane(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
-                            count = gridCount,
-                            key = { index ->
-                                if (index < items.itemCount) items[index]?.id ?: index else "append-loading"
-                            }
+                            count = items.itemCount,
+                            // Use a stable key that doesn't change as an item transitions
+                            // from null->loaded during paging.
+                            key = { index -> index }
                         ) { index ->
-                            if (index >= items.itemCount) {
-                                // Loading footer occupies one "cell" worth of space.
+                            val article = items[index] ?: return@items
+                            ArticleGridItem(
+                                article = article,
+                                onClick = { onSelectArticle(article.id) },
+                                onToggleFavorite = { onToggleFavorite(article) }
+                            )
+                        }
+
+                        if (showAppendLoading) {
+                            item(key = "append-loading") {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -303,13 +268,6 @@ fun ArticleListPane(
                                 ) {
                                     CircularProgressIndicator()
                                 }
-                            } else {
-                                val article = items[index] ?: return@items
-                                ArticleGridItem(
-                                    article = article,
-                                    onClick = { onSelectArticle(article.id) },
-                                    onToggleFavorite = { onToggleFavorite(article) }
-                                )
                             }
                         }
                     }
@@ -324,6 +282,68 @@ fun ArticleListPane(
                     )
                 }
             }
+
+            // First load / transient: keep a consistent loading indicator.
+            items.itemCount == 0 && refreshState is LoadState.Loading -> {
+                SpaceLoadingIndicator(message = "Launching news…")
+            }
+
+            items.itemCount == 0 && refreshState is LoadState.Error -> {
+                val message = refreshErrorMessage
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = message, style = MaterialTheme.typography.bodyMedium)
+                        Button(
+                            onClick = { items.retry() },
+                            modifier = Modifier.padding(top = 16.dp)
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+
+            // Not loading + no items:
+            // For Favorites (no RemoteMediator) `endOfPaginationReached` can be unreliable,
+            // so we primarily use `refreshState is NotLoading` and ensure we aren't still appending.
+            items.itemCount == 0 && refreshState is LoadState.NotLoading && appendState !is LoadState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    val trimmedQuery = query.trim()
+                    val emptyText = when (tab) {
+                        Tab.FAVORITES -> "No favorites yet"
+                        Tab.ALL -> when {
+                            trimmedQuery.isNotBlank() -> "No results for \"$trimmedQuery\""
+                            else -> "No articles yet"
+                        }
+                    }
+                    Text(text = emptyText, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            else -> {
+                // Transient state during refresh; keep UI stable.
+                SpaceLoadingIndicator(message = "Loading news…")
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpaceLoadingIndicator(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 12.dp)
+            )
         }
     }
 }

@@ -14,11 +14,22 @@ interface ArticleDao {
     @Query(
         """
         SELECT * FROM articles
-        WHERE (:search IS NULL OR :search = '' OR title LIKE '%' || :search || '%' OR summary LIKE '%' || :search || '%')
         ORDER BY publishedAt DESC
         """
     )
-    fun getArticles(search: String?): PagingSource<Int, ArticleEntity>
+    fun getArticles(): PagingSource<Int, ArticleEntity>
+
+    @Query(
+        """
+        SELECT * FROM articles
+        WHERE id IN (
+            SELECT rowid FROM ArticleSearchFtsEntity
+            WHERE ArticleSearchFtsEntity MATCH :search
+        )
+        ORDER BY publishedAt DESC
+        """
+    )
+    fun searchArticles(search: String): PagingSource<Int, ArticleEntity>
 
     @Query(
         """

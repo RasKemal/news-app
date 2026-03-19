@@ -1,4 +1,4 @@
-package com.example.newsapp.data.preferences
+package com.example.newsapp.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences

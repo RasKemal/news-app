@@ -19,6 +19,17 @@ class ArticleRemoteMediator(
     private val database: NewsDatabase,
     private val pageSize: Int
 ) : RemoteMediator<Int, ArticleEntity>() {
+    override suspend fun initialize(): InitializeAction {
+        // Offline-first: if we already have mediator state for this query, skip the initial refresh so
+        // the UI can immediately render cached Room data (and avoid blocking with network errors).
+        val searchKey = search.orEmpty()
+        val hasRemoteKeysForQuery = database.remoteKeysDao().hasRemoteKeysForQuery(searchKey)
+        return if (hasRemoteKeysForQuery) {
+            InitializeAction.SKIP_INITIAL_REFRESH
+        } else {
+            InitializeAction.LAUNCH_INITIAL_REFRESH
+        }
+    }
 
     override suspend fun load(
         loadType: LoadType,

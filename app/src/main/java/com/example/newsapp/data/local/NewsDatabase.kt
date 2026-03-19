@@ -6,10 +6,11 @@ import com.example.newsapp.data.local.dao.ArticleDao
 import com.example.newsapp.data.local.dao.RemoteKeysDao
 import com.example.newsapp.data.local.entity.ArticleEntity
 import com.example.newsapp.data.local.entity.ArticleRemoteKeys
+import com.example.newsapp.data.local.entity.ArticleSearchFtsEntity
 
 @Database(
-    entities = [ArticleEntity::class, ArticleRemoteKeys::class],
-    version = 1,
+    entities = [ArticleEntity::class, ArticleRemoteKeys::class, ArticleSearchFtsEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class NewsDatabase : RoomDatabase() {

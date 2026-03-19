@@ -24,11 +24,20 @@ class ArticleRepositoryImpl @Inject constructor(
 
     @OptIn(ExperimentalPagingApi::class)
     override fun getArticles(search: String?): Flow<PagingData<Article>> {
-        val pagingSourceFactory = { database.articleDao().getArticles(search) }
+        val pagingSourceFactory = {
+            if (search.isNullOrBlank()) {
+                database.articleDao().getArticles()
+            } else {
+                database.articleDao().searchArticles(search)
+            }
+        }
 
         return Pager(
             config = PagingConfig(
                 pageSize = DEFAULT_PAGE_SIZE,
+                // Reduce how much we download before the first items render.
+                initialLoadSize = DEFAULT_PAGE_SIZE,
+                prefetchDistance = (DEFAULT_PAGE_SIZE / 2).coerceAtLeast(1),
                 enablePlaceholders = false
             ),
             remoteMediator = ArticleRemoteMediator(
@@ -49,6 +58,8 @@ class ArticleRepositoryImpl @Inject constructor(
         return Pager(
             config = PagingConfig(
                 pageSize = DEFAULT_PAGE_SIZE,
+                initialLoadSize = DEFAULT_PAGE_SIZE,
+                prefetchDistance = (DEFAULT_PAGE_SIZE / 2).coerceAtLeast(1),
                 enablePlaceholders = false
             ),
             pagingSourceFactory = pagingSourceFactory

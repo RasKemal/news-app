@@ -2,14 +2,10 @@ package com.example.newsapp.ui.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.newsapp.ui.viewmodel.ArticleDetailViewModel
 
-import kotlinx.coroutines.flow.StateFlow
-import com.example.newsapp.domain.model.Article
-import com.example.newsapp.ui.state.UiState
 
 @Composable
 fun ArticleDetailScreen(

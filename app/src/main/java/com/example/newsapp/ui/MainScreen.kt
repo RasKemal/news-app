@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Divider
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -22,11 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -124,7 +119,7 @@ private fun BottomBar(
             onClick = { navController.navigate(ROUTE_FAVORITES) { launchSingleTop = true } },
             icon = {
                 Icon(
-                    painter = painterResource(R.drawable.favorite_icon),
+                    painter = painterResource(R.drawable.pin_filled),
                     contentDescription = "Favorites"
                 )
             },

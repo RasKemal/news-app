@@ -22,5 +22,8 @@ interface RemoteKeysDao {
 
     @Query("DELETE FROM article_remote_keys WHERE searchQuery = :search")
     suspend fun clearRemoteKeysForQuery(search: String)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM article_remote_keys WHERE searchQuery = :search)")
+    suspend fun hasRemoteKeysForQuery(search: String): Boolean
 }
 

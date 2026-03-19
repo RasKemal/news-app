@@ -11,7 +11,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import com.example.newsapp.data.preferences.UserPreferencesRepositoryImpl
+import com.example.newsapp.data.repository.UserPreferencesRepositoryImpl
 import com.example.newsapp.domain.repository.UserPreferencesRepository
 import javax.inject.Singleton
 
