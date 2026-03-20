@@ -15,7 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private const val DEFAULT_PAGE_SIZE = 10
+private const val DEFAULT_PAGE_SIZE = 27
 
 class ArticleRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
@@ -38,7 +38,7 @@ class ArticleRepositoryImpl @Inject constructor(
                 // Reduce how much we download before the first items render.
                 initialLoadSize = DEFAULT_PAGE_SIZE,
                 prefetchDistance = (DEFAULT_PAGE_SIZE / 2).coerceAtLeast(1),
-                enablePlaceholders = false
+                enablePlaceholders = true
             ),
             remoteMediator = ArticleRemoteMediator(
                 search = search,
@@ -60,7 +60,7 @@ class ArticleRepositoryImpl @Inject constructor(
                 pageSize = DEFAULT_PAGE_SIZE,
                 initialLoadSize = DEFAULT_PAGE_SIZE,
                 prefetchDistance = (DEFAULT_PAGE_SIZE / 2).coerceAtLeast(1),
-                enablePlaceholders = false
+                enablePlaceholders = true
             ),
             pagingSourceFactory = pagingSourceFactory
         ).flow.map { pagingData ->
