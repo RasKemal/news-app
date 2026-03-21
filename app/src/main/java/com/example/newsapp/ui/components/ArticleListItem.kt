@@ -1,5 +1,14 @@
 package com.example.newsapp.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -108,17 +117,35 @@ fun ArticleListItem(
 
             IconButton(
                 onClick = onToggleFavorite,
-                modifier = Modifier.align(Alignment.Top)
+                modifier = Modifier.align(Alignment.Top) // Use size(36.dp) for the Grid item!
             ) {
-                Icon(
-                    painter = painterResource(
-                        id = if (article.isFavorite) R.drawable.pin_filled else R.drawable.pin_outlined
-                    ),
-                    contentDescription = if (article.isFavorite) "Unpin article" else "Pin article",
-                    tint = if (article.isFavorite) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(26.dp)
-                )
+                AnimatedContent(
+                    targetState = article.isFavorite,
+                    transitionSpec = {
+                        // When the user pins the article (false -> true)
+                        if (targetState) {
+                            // Creates a bouncy "pop" effect
+                            (scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) + fadeIn(tween(150))) togetherWith
+                                    (scaleOut(tween(100)) + fadeOut(tween(100)))
+                        } else {
+                            // When unpinning (true -> false), just do a quick, subtle fade/scale
+                            (scaleIn(tween(150)) + fadeIn(tween(150))) togetherWith
+                                    (scaleOut(tween(150)) + fadeOut(tween(150)))
+                        }
+                    },
+                    label = "pinAnimation"
+                ) { isFav ->
+                    // The icon draws based on the animated 'isFav' state, NOT the raw 'article.isFavorite'
+                    Icon(
+                        painter = painterResource(
+                            id = if (isFav) R.drawable.pin_filled else R.drawable.pin_outlined
+                        ),
+                        contentDescription = if (isFav) "Unpin article" else "Pin article",
+                        tint = if (isFav) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
         }
     }

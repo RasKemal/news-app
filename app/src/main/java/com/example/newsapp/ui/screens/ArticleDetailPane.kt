@@ -15,28 +15,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.ui.state.UiState
-import com.example.newsapp.ui.theme.NewsAppTheme
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun ArticleDetailPane(
-    detailUiState: StateFlow<UiState<Article>>,
+    uiState: UiState<Article>,
     onBack: () -> Unit,
     onRetry: () -> Unit,
     onToggleFavorite: (Article) -> Unit,
     showBackButton: Boolean
 ) {
-    val uiState by detailUiState.collectAsState()
 
     when (uiState) {
         is UiState.Loading -> {
@@ -44,26 +37,19 @@ fun ArticleDetailPane(
                 CircularProgressIndicator()
             }
         }
-
         is UiState.Error -> {
-            val message = (uiState as UiState.Error).message
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = message, style = MaterialTheme.typography.bodyMedium)
-                    Button(
-                        onClick = onRetry,
-                        modifier = Modifier.padding(top = 16.dp)
-                    ) {
+                    Text(text = uiState.message, style = MaterialTheme.typography.bodyMedium)
+                    Button(onClick = onRetry, modifier = Modifier.padding(top = 16.dp)) {
                         Text("Retry")
                     }
                 }
             }
         }
-
         is UiState.Success -> {
-            val article = (uiState as UiState.Success).data
             ArticleDetailContent(
-                article = article,
+                article = uiState.data,
                 onBack = onBack,
                 onToggleFavorite = onToggleFavorite,
                 showBackButton = showBackButton
@@ -127,64 +113,6 @@ private fun ArticleDetailContent(
                 Text(if (article.isFavorite) "Unfavorite" else "Favorite")
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ArticleDetailPaneSuccessPreview() {
-    val state = MutableStateFlow<UiState<Article>>(
-        UiState.Success(
-            Article(
-                id = 1L,
-                title = "NASA shares Artemis mission update",
-                summary = "NASA announced timeline details for upcoming Artemis milestones and hardware tests.",
-                url = "https://example.com/article/2",
-                imageUrl = null,
-                newsSite = "NASA",
-                publishedAt = "2026-03-17T09:00:00Z",
-                isFavorite = false
-            )
-        )
-    )
-    NewsAppTheme {
-        ArticleDetailPane(
-            detailUiState = state,
-            onBack = {},
-            onRetry = {},
-            onToggleFavorite = {},
-            showBackButton = true
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ArticleDetailPaneLoadingPreview() {
-    val state = MutableStateFlow<UiState<Article>>(UiState.Loading)
-    NewsAppTheme {
-        ArticleDetailPane(
-            detailUiState = state,
-            onBack = {},
-            onRetry = {},
-            onToggleFavorite = {},
-            showBackButton = true
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ArticleDetailPaneErrorPreview() {
-    val state = MutableStateFlow<UiState<Article>>(UiState.Error("Failed to load detail"))
-    NewsAppTheme {
-        ArticleDetailPane(
-            detailUiState = state,
-            onBack = {},
-            onRetry = {},
-            onToggleFavorite = {},
-            showBackButton = true
-        )
     }
 }
 

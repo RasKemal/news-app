@@ -1,5 +1,7 @@
 package com.example.newsapp.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,8 +52,13 @@ fun MainScreen() {
 
     val isWide = rememberWideLayout()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: ROUTE_ALL
-    val currentTab = if (currentRoute.startsWith(ROUTE_FAVORITES)) Tab.FAVORITES else Tab.ALL
+    val currentRoute = remember(navBackStackEntry) {
+        navBackStackEntry?.destination?.route ?: ROUTE_ALL
+    }
+
+    val currentTab = remember(currentRoute) {
+        if (currentRoute.startsWith(ROUTE_FAVORITES)) Tab.FAVORITES else Tab.ALL
+    }
 
     // Wide layout selection (no navigation to detail route).
     val selectedIdState = remember { mutableStateOf<Long?>(null) }
@@ -196,7 +203,23 @@ private fun NarrowLayout(
                     snackbarHostState = snackbarHostState
                 )
             }
-            composable(route = "$ROUTE_DETAIL/{id}") { backStackEntry ->
+            composable(
+                route = "$ROUTE_DETAIL/{id}",
+                // SLIDE IN: When opening an article, slide it in from the right edge
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(400) // 400ms for a smooth, readable slide
+                    )
+                },
+                // SLIDE OUT: When hitting the back button, slide it back out to the right
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(400)
+                    )
+                }
+            ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id")?.toLongOrNull()
                 if (id != null) {
                     ArticleDetailScreen(
