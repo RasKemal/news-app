@@ -6,7 +6,7 @@ import com.example.newsapp.domain.common.Result as DomainResult
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.usecase.GetArticleDetailUseCase
 import com.example.newsapp.domain.usecase.ToggleFavoriteUseCase
-import com.example.newsapp.ui.state.UiState
+import com.example.newsapp.ui.helper.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf

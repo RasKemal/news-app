@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.newsapp.domain.model.Article
-import com.example.newsapp.ui.state.UiState
+import com.example.newsapp.ui.helper.UiState
 
 @Composable
 fun ArticleDetailPane(

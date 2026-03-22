@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">NewsApp</string>
+    <string name="error_no_internet_title">No Internet Connection</string>
+    <string name="error_no_internet_description">We couldn\'t reach the network. Please check your connection and try again.</string>
+    <string name="error_generic_title">Something went wrong</string>
+    <string name="error_generic_description">An unexpected error occurred while loading articles. Please try again later.</string>
 </resources>

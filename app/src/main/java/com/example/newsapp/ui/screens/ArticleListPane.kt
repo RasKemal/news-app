@@ -36,20 +36,19 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import com.example.newsapp.R
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.model.ArticleListLayout
 import com.example.newsapp.domain.model.UserPreferences
@@ -58,6 +57,10 @@ import com.example.newsapp.ui.components.ArticleGridItem
 import com.example.newsapp.ui.components.ArticleGridPlaceholder
 import com.example.newsapp.ui.components.ArticleListItem
 import com.example.newsapp.ui.components.ArticleListPlaceholder
+import com.example.newsapp.ui.components.GenericEmptyStateLayout
+import com.example.newsapp.ui.components.PaginationErrorIndicator
+import com.example.newsapp.ui.helper.ErrorText
+import com.example.newsapp.ui.helper.toUserFriendlyText
 
 data class ArticleListActions(
     val onSearchQueryChanged: (String) -> Unit,
@@ -77,18 +80,14 @@ fun ArticleListPane(
     actions: ArticleListActions
 ) {
     val items = articles.collectAsLazyPagingItems()
-
-    val refreshState = items.loadState.refresh
-    val appendState = items.loadState.append
-    val isListLayout = userPreferences.articleListLayout == ArticleListLayout.LIST
-    val showAppendLoading = appendState is LoadState.Loading
-
-    // We derive the refreshing state directly from Paging 3's engine!
-    val isRefreshing = refreshState is LoadState.Loading && items.itemCount > 0
-
     // Hoisted scroll states
     val listState = rememberLazyListState()
     val gridState = rememberLazyStaggeredGridState()
+
+    val refreshState = items.loadState.refresh
+    val isListLayout = userPreferences.articleListLayout == ArticleListLayout.LIST
+    // We derive the refreshing state directly from Paging 3's engine!
+    val isRefreshing = refreshState is LoadState.Loading && items.itemCount > 0
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -114,8 +113,7 @@ fun ArticleListPane(
             ) {
                 ArticleListContent(
                     items = items, isListLayout = isListLayout, listState = listState,
-                    gridState = gridState, showAppendLoading = showAppendLoading,
-                    appendState = appendState, refreshState = refreshState,
+                    gridState = gridState, refreshState = refreshState,
                     tab = tab, searchQuery = searchQuery,
                     onSelectArticle = actions.onSelectArticle,
                     onToggleFavorite = actions.onToggleFavorite
@@ -126,10 +124,9 @@ fun ArticleListPane(
             Box(modifier = bodyModifier) {
                 ArticleListContent(
                     items = items, isListLayout = isListLayout, listState = listState,
-                    gridState = gridState, showAppendLoading = showAppendLoading,
-                    appendState = appendState, refreshState = refreshState,
+                    gridState = gridState, refreshState = refreshState,
                     tab = tab, searchQuery = searchQuery,
-                    onSelectArticle = actions.onSelectArticle,       // <-- Unwrapped here
+                    onSelectArticle = actions.onSelectArticle,
                     onToggleFavorite = actions.onToggleFavorite
                 )
             }
@@ -147,14 +144,18 @@ private fun ArticleListContent(
     isListLayout: Boolean,
     listState: LazyListState,
     gridState: LazyStaggeredGridState,
-    showAppendLoading: Boolean,
-    appendState: LoadState,
     refreshState: LoadState,
     tab: Tab,
     searchQuery: String,
     onSelectArticle: (Long) -> Unit,
     onToggleFavorite: (Article) -> Unit
 ) {
+    val showAppendLoading = items.loadState.mediator?.append is LoadState.Loading ||
+            items.loadState.source.append is LoadState.Loading
+
+    val appendError = (items.loadState.mediator?.append as? LoadState.Error)
+        ?: (items.loadState.source.append as? LoadState.Error)
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             AnimatedContent(
@@ -191,6 +192,15 @@ private fun ArticleListContent(
                                 ) { CircularProgressIndicator() }
                             }
                         }
+
+                        if (appendError != null) {
+                            item(key = "append-error") {
+                                PaginationErrorIndicator(
+                                    error = appendError.error,
+                                    onRetry = { items.retry() }
+                                )
+                            }
+                        }
                     }
                 } else {
                     LazyVerticalStaggeredGrid(
@@ -218,7 +228,7 @@ private fun ArticleListContent(
                             }
                         }
                         if (showAppendLoading) {
-                            item(key = "append-loading") {
+                            item(key = "append-loading", span = StaggeredGridItemSpan.FullLine) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -227,24 +237,31 @@ private fun ArticleListContent(
                                 ) { CircularProgressIndicator() }
                             }
                         }
+
+                        // 3. Add the Error Item to the bottom of the Grid!
+                        if (appendError != null) {
+                            item(key = "append-error", span = StaggeredGridItemSpan.FullLine) {
+                                PaginationErrorIndicator(
+                                    error = appendError.error,
+                                    onRetry = { items.retry() }
+                                )
+                            }
+                        }
                     }
                 }
-            }
-
-            if (appendState is LoadState.Error) {
-                Text(
-                    text = appendState.error.message ?: "Failed to load more",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(12.dp)
-                )
             }
         }
 
         // --- OVERLAYS & EMPTY STATES ---
         val isEmpty = items.itemCount == 0
-        val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
-                items.loadState.source.append.endOfPaginationReached &&
-                (items.loadState.mediator?.refresh is LoadState.NotLoading || items.loadState.mediator == null)
+        val isTrulyEmpty = if (items.loadState.mediator != null) {
+            // For the ALL tab (Network + DB)
+            val mediatorRefresh = items.loadState.mediator?.refresh
+            mediatorRefresh is LoadState.NotLoading && mediatorRefresh.endOfPaginationReached
+        } else {
+            // For the FAVORITES tab (DB only)
+            items.loadState.source.refresh is LoadState.NotLoading && items.loadState.source.append.endOfPaginationReached
+        }
         val hasError =
             refreshState is LoadState.Error || items.loadState.mediator?.refresh is LoadState.Error
 
@@ -260,9 +277,10 @@ private fun ArticleListContent(
         } else {
             // Error Pill for background refresh failures
             if (refreshState is LoadState.Error) {
-                val errorMsg = refreshState.error.message ?: "Error updating"
+                val errorText = refreshState.error.toUserFriendlyText()
+
                 Text(
-                    text = errorMsg,
+                    text = stringResource(id = errorText.titleRes),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -387,10 +405,6 @@ private fun EmptyStateOverlay(
     tab: Tab,
     query: String
 ) {
-    val errorMessage = (refreshState as? LoadState.Error)?.error?.message
-        ?: (items.loadState.mediator?.refresh as? LoadState.Error)?.error?.message
-        ?: "Failed to load articles"
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -399,81 +413,51 @@ private fun EmptyStateOverlay(
     ) {
         when {
             hasError -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = errorMessage, style = MaterialTheme.typography.bodyMedium)
-                    Button(onClick = { items.retry() }, modifier = Modifier.padding(top = 16.dp)) {
-                        Text("Retry")
+                val error = (refreshState as? LoadState.Error)?.error
+                    ?: (items.loadState.mediator?.refresh as? LoadState.Error)?.error
+
+                val errorText = error?.toUserFriendlyText() ?: ErrorText(
+                    titleRes = R.string.error_generic_title,
+                    descriptionRes = R.string.error_generic_description
+                )
+
+                GenericEmptyStateLayout(
+                    iconRes = R.drawable.network_error_icon,
+                    title = stringResource(errorText.titleRes),
+                    description = stringResource(errorText.descriptionRes),
+                    iconTint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
+                    actionButton = {
+                        Button(
+                            onClick = { items.retry() },
+                            shape = RoundedCornerShape(999.dp)
+                        ) {
+                            Text("Retry")
+                        }
                     }
-                }
+                )
             }
 
             isTrulyEmpty -> {
                 val trimmedQuery = query.trim()
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(32.dp)
-                ) {
-                    if (tab == Tab.FAVORITES) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.favorites_nodata_icon),
-                            contentDescription = "No favorites",
-                            modifier = Modifier.size(120.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No favorites yet.",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Articles you pin will appear here so you can easily read them later.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    } else if (trimmedQuery.isNotBlank()) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.search_nodata_icon),
-                            contentDescription = "No search results",
-                            modifier = Modifier.size(120.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No results found.",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "We couldn't find any articles matching \"$trimmedQuery\".\nTry a different keyword.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(id = R.drawable.all_nodata_icon),
-                            contentDescription = "No articles",
-                            modifier = Modifier.size(120.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No articles yet.",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Could not load any articles, please check your network connection.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+
+                if (tab == Tab.FAVORITES) {
+                    GenericEmptyStateLayout(
+                        iconRes = R.drawable.favorites_nodata_icon,
+                        title = "No favorites yet.",
+                        description = "Articles you pin will appear here so you can easily read them later."
+                    )
+                } else if (trimmedQuery.isNotBlank()) {
+                    GenericEmptyStateLayout(
+                        iconRes = R.drawable.search_nodata_icon,
+                        title = "No results found.",
+                        description = "We couldn't find any articles matching \"$trimmedQuery\".\nTry a different keyword."
+                    )
+                } else {
+                    GenericEmptyStateLayout(
+                        iconRes = R.drawable.all_nodata_icon,
+                        title = "No news available.",
+                        description = "There are currently no articles published.\nPull down to refresh and check again."
+                    )
                 }
             }
 
