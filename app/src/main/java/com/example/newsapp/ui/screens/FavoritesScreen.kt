@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.newsapp.ui.Tab
 import com.example.newsapp.ui.viewmodel.FavoritesViewModel
 
@@ -19,8 +19,8 @@ fun FavoritesScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: FavoritesViewModel = hiltViewModel()
-    val userPrefs by viewModel.userPreferences.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
+    val userPrefs by viewModel.userPreferences.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessages.collectLatest { message ->
@@ -34,10 +34,12 @@ fun FavoritesScreen(
         userPreferences = userPrefs,
         searchQuery = searchQuery,
         articles = viewModel.articles,
-        onSearchQueryChanged = {},
-        onSelectArticle = onSelectArticle,
-        onToggleFavorite = viewModel::onToggleFavorite,
-        onRequestLayout = viewModel::onRequestLayout
+        actions = ArticleListActions(
+            onSearchQueryChanged = {},
+            onSelectArticle = onSelectArticle,
+            onToggleFavorite = viewModel::onToggleFavorite,
+            onRequestLayout = viewModel::onRequestLayout
+        )
     )
 }
 

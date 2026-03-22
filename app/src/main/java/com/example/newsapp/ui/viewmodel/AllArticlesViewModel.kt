@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -70,8 +69,9 @@ class AllArticlesViewModel @Inject constructor(
         searchQueryForRepo
             .flatMapLatest { query -> getArticlesUseCase(query) }
             .cachedIn(viewModelScope)
+
     fun onSearchQueryChanged(query: String) {
-        _searchQuery.update { query }
+        _searchQuery.value = query
     }
 
     fun onRequestLayout(layout: ArticleListLayout) {

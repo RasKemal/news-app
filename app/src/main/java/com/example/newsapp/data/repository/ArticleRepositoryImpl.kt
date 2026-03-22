@@ -15,7 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private const val DEFAULT_PAGE_SIZE = 27
+private const val DEFAULT_PAGE_SIZE = 28
 
 class ArticleRepositoryImpl @Inject constructor(
     private val apiService: ApiService,

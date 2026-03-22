@@ -3,12 +3,12 @@ package com.example.newsapp.ui.screens
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.newsapp.ui.Tab
 import com.example.newsapp.ui.viewmodel.AllArticlesViewModel
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -18,8 +18,8 @@ fun AllArticlesScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: AllArticlesViewModel = hiltViewModel()
-    val userPrefs by viewModel.userPreferences.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
+    val userPrefs by viewModel.userPreferences.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessages.collectLatest { message ->
@@ -33,10 +33,12 @@ fun AllArticlesScreen(
         userPreferences = userPrefs,
         searchQuery = searchQuery,
         articles = viewModel.articles,
-        onSearchQueryChanged = viewModel::onSearchQueryChanged,
-        onSelectArticle = onSelectArticle,
-        onToggleFavorite = viewModel::onToggleFavorite,
-        onRequestLayout = viewModel::onRequestLayout
+        actions = ArticleListActions(
+            onSearchQueryChanged = viewModel::onSearchQueryChanged,
+            onSelectArticle = onSelectArticle,
+            onToggleFavorite = viewModel::onToggleFavorite,
+            onRequestLayout = viewModel::onRequestLayout
+        )
     )
 }
 

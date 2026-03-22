@@ -31,7 +31,8 @@ class FavoritesViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
-
+    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val snackbarMessages = _snackbarMessages.asSharedFlow()
     val userPreferences: StateFlow<UserPreferences> =
         observeUserPreferencesUseCase()
             .stateIn(
@@ -43,9 +44,6 @@ class FavoritesViewModel @Inject constructor(
     val articles: Flow<androidx.paging.PagingData<Article>> =
         getFavoriteArticlesUseCase()
             .cachedIn(viewModelScope)
-
-    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val snackbarMessages = _snackbarMessages.asSharedFlow()
 
     fun onRequestLayout(layout: ArticleListLayout) {
         viewModelScope.launch {

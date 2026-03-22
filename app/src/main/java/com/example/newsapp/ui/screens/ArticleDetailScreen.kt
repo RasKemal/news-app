@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.newsapp.ui.viewmodel.ArticleDetailViewModel
 
 
@@ -17,7 +18,7 @@ fun ArticleDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: ArticleDetailViewModel = hiltViewModel()
-    val uiState by viewModel.detailUiState.collectAsState()
+    val uiState by viewModel.detailUiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(articleId) {
         viewModel.setArticleId(articleId)

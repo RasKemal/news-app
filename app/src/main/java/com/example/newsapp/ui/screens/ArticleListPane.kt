@@ -38,9 +38,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.paging.compose.LazyPagingItems
@@ -56,6 +59,14 @@ import com.example.newsapp.ui.components.ArticleGridPlaceholder
 import com.example.newsapp.ui.components.ArticleListItem
 import com.example.newsapp.ui.components.ArticleListPlaceholder
 
+data class ArticleListActions(
+    val onSearchQueryChanged: (String) -> Unit,
+    val onSelectArticle: (Long) -> Unit,
+    val onToggleFavorite: (Article) -> Unit,
+    val onRequestLayout: (ArticleListLayout) -> Unit
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleListPane(
     tab: Tab,
@@ -63,12 +74,8 @@ fun ArticleListPane(
     userPreferences: UserPreferences,
     searchQuery: String,
     articles: Flow<PagingData<Article>>,
-    onSearchQueryChanged: (String) -> Unit,
-    onSelectArticle: (Long) -> Unit,
-    onToggleFavorite: (Article) -> Unit,
-    onRequestLayout: (ArticleListLayout) -> Unit
+    actions: ArticleListActions
 ) {
-
     val items = articles.collectAsLazyPagingItems()
 
     val refreshState = items.loadState.refresh
@@ -76,7 +83,10 @@ fun ArticleListPane(
     val isListLayout = userPreferences.articleListLayout == ArticleListLayout.LIST
     val showAppendLoading = appendState is LoadState.Loading
 
-    // Hoisted scroll states to prevent jumping during layout toggles
+    // We derive the refreshing state directly from Paging 3's engine!
+    val isRefreshing = refreshState is LoadState.Loading && items.itemCount > 0
+
+    // Hoisted scroll states
     val listState = rememberLazyListState()
     val gridState = rememberLazyStaggeredGridState()
 
@@ -88,140 +98,180 @@ fun ArticleListPane(
             showSearch = showSearch,
             searchQuery = searchQuery,
             isListLayout = isListLayout,
-            onSearchQueryChanged = onSearchQueryChanged,
-            onRequestLayout = onRequestLayout
+            onSearchQueryChanged = actions.onSearchQueryChanged,
+            onRequestLayout = actions.onRequestLayout
         )
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        // --- 2. CONDITIONALLY REFRESHABLE BODY ---
+        val bodyModifier = Modifier.weight(1f) // Fills the remaining vertical space
 
-            // --- 2. PERMANENT LIST TREE ---
-            Column(modifier = Modifier.fillMaxSize()) {
-                AnimatedContent(
-                    targetState = isListLayout,
-                    transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
-                    label = "listGridTransition",
-                    modifier = Modifier.weight(1f) // Takes up remaining vertical space
-                ) { targetIsList ->
-                    if (targetIsList) {
-                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                            items(
-                                count = items.itemCount,
-                                key = { index -> items[index]?.id ?: index },
-                                contentType = { "article" }
-                            ) { index ->
-                                val article = items[index]
-                                if (article != null) {
-                                    ArticleListItem(
-                                        article = article,
-                                        onClick = { onSelectArticle(article.id) },
-                                        onToggleFavorite = { onToggleFavorite(article) }
-                                    )
-                                } else {
-                                    ArticleListPlaceholder()
-                                }
-                            }
-                            if (showAppendLoading) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) { CircularProgressIndicator() }
-                                }
+        if (tab == Tab.ALL) {
+            // NEW 1.3.0 API: Automatically handles the physics, indicators, and state
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { items.refresh() }, // Triggers RemoteMediator LoadType.REFRESH
+                modifier = bodyModifier
+            ) {
+                ArticleListContent(
+                    items = items, isListLayout = isListLayout, listState = listState,
+                    gridState = gridState, showAppendLoading = showAppendLoading,
+                    appendState = appendState, refreshState = refreshState,
+                    tab = tab, searchQuery = searchQuery,
+                    onSelectArticle = actions.onSelectArticle,
+                    onToggleFavorite = actions.onToggleFavorite
+                )
+            }
+        } else {
+            // Favorites tab gets a standard Box (No pull-to-refresh physics)
+            Box(modifier = bodyModifier) {
+                ArticleListContent(
+                    items = items, isListLayout = isListLayout, listState = listState,
+                    gridState = gridState, showAppendLoading = showAppendLoading,
+                    appendState = appendState, refreshState = refreshState,
+                    tab = tab, searchQuery = searchQuery,
+                    onSelectArticle = actions.onSelectArticle,       // <-- Unwrapped here
+                    onToggleFavorite = actions.onToggleFavorite
+                )
+            }
+        }
+    }
+}
+
+// ============================================================================
+// EXTRACTED LIST CONTENT
+// ============================================================================
+
+@Composable
+private fun ArticleListContent(
+    items: LazyPagingItems<Article>,
+    isListLayout: Boolean,
+    listState: LazyListState,
+    gridState: LazyStaggeredGridState,
+    showAppendLoading: Boolean,
+    appendState: LoadState,
+    refreshState: LoadState,
+    tab: Tab,
+    searchQuery: String,
+    onSelectArticle: (Long) -> Unit,
+    onToggleFavorite: (Article) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = isListLayout,
+                transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
+                label = "listGridTransition",
+                modifier = Modifier.weight(1f)
+            ) { targetIsList ->
+                if (targetIsList) {
+                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+                        items(
+                            count = items.itemCount,
+                            key = { index -> items[index]?.id ?: index },
+                            contentType = { "article" }
+                        ) { index ->
+                            val article = items[index]
+                            if (article != null) {
+                                ArticleListItem(
+                                    article = article,
+                                    onClick = { onSelectArticle(article.id) },
+                                    onToggleFavorite = { onToggleFavorite(article) }
+                                )
+                            } else {
+                                ArticleListPlaceholder()
                             }
                         }
-                    } else {
-                        LazyVerticalStaggeredGrid(
-                            columns = StaggeredGridCells.Fixed(2),
-                            state = gridState,
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalItemSpacing = 8.dp,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(
-                                count = items.itemCount,
-                                key = { index -> items[index]?.id ?: index },
-                                contentType = { "article" }
-                            ) { index ->
-                                val article = items[index]
-                                if (article != null) {
-                                    ArticleGridItem(
-                                        article = article,
-                                        onClick = { onSelectArticle(article.id) },
-                                        onToggleFavorite = { onToggleFavorite(article) }
-                                    )
-                                } else {
-                                    ArticleGridPlaceholder()
-                                }
+                        if (showAppendLoading) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) { CircularProgressIndicator() }
                             }
-                            if (showAppendLoading) {
-                                item(key = "append-loading") {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) { CircularProgressIndicator() }
-                                }
+                        }
+                    }
+                } else {
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Fixed(2),
+                        state = gridState,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalItemSpacing = 8.dp,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(
+                            count = items.itemCount,
+                            key = { index -> items[index]?.id ?: index },
+                            contentType = { "article" }
+                        ) { index ->
+                            val article = items[index]
+                            if (article != null) {
+                                ArticleGridItem(
+                                    article = article,
+                                    onClick = { onSelectArticle(article.id) },
+                                    onToggleFavorite = { onToggleFavorite(article) }
+                                )
+                            } else {
+                                ArticleGridPlaceholder()
+                            }
+                        }
+                        if (showAppendLoading) {
+                            item(key = "append-loading") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) { CircularProgressIndicator() }
                             }
                         }
                     }
                 }
-
-                if (appendState is LoadState.Error) {
-                    Text(
-                        text = appendState.error.message ?: "Failed to load more",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
             }
 
-            // --- 3. OVERLAYS & EMPTY STATES ---
-            val isEmpty = items.itemCount == 0
-            val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
-                    items.loadState.source.append.endOfPaginationReached &&
-                    (items.loadState.mediator?.refresh is LoadState.NotLoading || items.loadState.mediator == null)
-            val hasError =
-                refreshState is LoadState.Error || items.loadState.mediator?.refresh is LoadState.Error
-
-            if (isEmpty) {
-                EmptyStateOverlay(
-                    hasError = hasError,
-                    isTrulyEmpty = isTrulyEmpty,
-                    refreshState = refreshState,
-                    items = items,
-                    tab = tab,
-                    query = searchQuery
+            if (appendState is LoadState.Error) {
+                Text(
+                    text = appendState.error.message ?: "Failed to load more",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(12.dp)
                 )
-            } else {
-                // Top-aligned indicators for background refreshing when data already exists
-                if (refreshState is LoadState.Loading) {
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                }
-                if (refreshState is LoadState.Error) {
-                    val errorMsg =
-                        refreshState.error.message ?: "Error updating"
-                    Text(
-                        text = errorMsg,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .background(
-                                MaterialTheme.colorScheme.errorContainer,
-                                RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                    )
-                }
+            }
+        }
+
+        // --- OVERLAYS & EMPTY STATES ---
+        val isEmpty = items.itemCount == 0
+        val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
+                items.loadState.source.append.endOfPaginationReached &&
+                (items.loadState.mediator?.refresh is LoadState.NotLoading || items.loadState.mediator == null)
+        val hasError =
+            refreshState is LoadState.Error || items.loadState.mediator?.refresh is LoadState.Error
+
+        if (isEmpty) {
+            EmptyStateOverlay(
+                hasError = hasError,
+                isTrulyEmpty = isTrulyEmpty,
+                refreshState = refreshState,
+                items = items,
+                tab = tab,
+                query = searchQuery
+            )
+        } else {
+            // Error Pill for background refresh failures
+            if (refreshState is LoadState.Error) {
+                val errorMsg = refreshState.error.message ?: "Error updating"
+                Text(
+                    text = errorMsg,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .background(
+                            MaterialTheme.colorScheme.errorContainer,
+                            RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                )
             }
         }
     }
@@ -240,9 +290,11 @@ private fun ArticleListHeader(
     onSearchQueryChanged: (String) -> Unit,
     onRequestLayout: (ArticleListLayout) -> Unit
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(12.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = if (tab == Tab.ALL) "All Articles" else "Favorite Articles",

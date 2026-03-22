@@ -8,6 +8,7 @@ import androidx.room.withTransaction
 import com.example.newsapp.data.local.NewsDatabase
 import com.example.newsapp.data.local.entity.ArticleEntity
 import com.example.newsapp.data.local.entity.ArticleRemoteKeys
+import com.example.newsapp.data.local.entity.SearchMetadataEntity
 import com.example.newsapp.data.mapper.toEntity
 import com.example.newsapp.data.remote.ApiService
 import com.example.newsapp.data.remote.dto.ArticleDto
@@ -19,12 +20,26 @@ class ArticleRemoteMediator(
     private val database: NewsDatabase,
     private val pageSize: Int
 ) : RemoteMediator<Int, ArticleEntity>() {
+
+    private val CACHE_TIMEOUT_MILLIS = 1000L * 60L * 60L
+
     override suspend fun initialize(): InitializeAction {
         // Offline-first: if we already have mediator state for this query, skip the initial refresh so
         // the UI can immediately render cached Room data (and avoid blocking with network errors).
+
         val searchKey = search.orEmpty()
-        val hasRemoteKeysForQuery = database.remoteKeysDao().hasRemoteKeysForQuery(searchKey)
-        return if (hasRemoteKeysForQuery) {
+
+        // 1. Grab the time we last successfully fetched this exact search
+        val lastRefreshTime = database.searchMetadataDao().getLastRefreshTime(searchKey) ?: 0L
+
+        // 2. Check if it has been longer than our 1-hour limit
+        val isCacheExpired = System.currentTimeMillis() - lastRefreshTime > CACHE_TIMEOUT_MILLIS
+
+        // 3. Check if we actually have data to show
+        val hasRemoteKeys = database.remoteKeysDao().hasRemoteKeysForQuery(searchKey)
+
+        // 4. THE DECISION: Only skip the network if the cache is BOTH fresh AND exists
+        return if (!isCacheExpired && hasRemoteKeys) {
             InitializeAction.SKIP_INITIAL_REFRESH
         } else {
             InitializeAction.LAUNCH_INITIAL_REFRESH
@@ -64,9 +79,17 @@ class ArticleRemoteMediator(
             database.withTransaction {
                 val articleDao = database.articleDao()
                 val remoteKeysDao = database.remoteKeysDao()
+                val searchMetadataDao = database.searchMetadataDao()
 
                 if (loadType == LoadType.REFRESH) {
                     remoteKeysDao.clearRemoteKeysForQuery(searchKey)
+                    articleDao.clearNonFavoriteArticlesByQuery(searchKey)
+                    searchMetadataDao.insert(
+                        SearchMetadataEntity(
+                            searchKey,
+                            System.currentTimeMillis()
+                        )
+                    )
                 }
 
                 val ids = dtos.map { it.id }
@@ -91,8 +114,8 @@ class ArticleRemoteMediator(
                     )
                 }
 
-                remoteKeysDao.insertAll(keys)
                 articleDao.insertAll(entities)
+                remoteKeysDao.insertAll(keys)
             }
 
             MediatorResult.Success(endOfPaginationReached = endReached)

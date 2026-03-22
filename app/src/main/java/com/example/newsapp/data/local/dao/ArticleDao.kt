@@ -40,6 +40,15 @@ interface ArticleDao {
     )
     fun getFavoriteArticles(): PagingSource<Int, ArticleEntity>
 
+    @Query("""
+        DELETE FROM articles 
+        WHERE isFavorite = 0 
+        AND id IN (
+            SELECT articleId FROM article_remote_keys WHERE searchQuery = :searchQuery
+        )
+    """)
+    suspend fun clearNonFavoriteArticlesByQuery(searchQuery: String)
+
     @Query("SELECT * FROM articles WHERE id = :id LIMIT 1")
     fun observeArticleById(id: Long): Flow<ArticleEntity?>
 
