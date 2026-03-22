@@ -62,6 +62,11 @@ fun MainScreen() {
     }
 
     var selectedArticleId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var displayArticleId by rememberSaveable { mutableStateOf(0L) }
+
+    selectedArticleId?.let { safeId ->
+        displayArticleId = safeId
+    }
 
     // --- ROTATION STATE HANDLER ---
     // Smoothly hands off the detail view between the NavHost (Narrow) and the Side Pane (Wide)
@@ -136,7 +141,6 @@ fun MainScreen() {
                             ArticleDetailScreen(
                                 articleId = id,
                                 onBack = { navController.popBackStack() },
-                                showBackButton = true
                             )
                         }
                     }
@@ -152,10 +156,9 @@ fun MainScreen() {
                 Row(modifier = Modifier.fillMaxSize()) {
                     Divider(modifier = Modifier.width(1.dp).fillMaxHeight())
                     ArticleDetailScreen(
-                        articleId = selectedArticleId ?: 0L,
+                        articleId = displayArticleId,
                         // Closing the pane just requires nullifying the state
                         onBack = { selectedArticleId = null },
-                        showBackButton = true
                     )
                 }
             }
