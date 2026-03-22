@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.helper
+package com.example.newsapp.core.helpers
 
 sealed class UiState<out T> {
     data object Loading : UiState<Nothing>()

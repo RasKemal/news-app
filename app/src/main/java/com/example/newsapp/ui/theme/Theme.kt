@@ -1,24 +1,18 @@
 package com.example.newsapp.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import com.example.newsapp.ui.theme.SpotifyDarkBackground
-import com.example.newsapp.ui.theme.SpotifyDarkSurface
-import com.example.newsapp.ui.theme.SpotifyGreen
-import com.example.newsapp.ui.theme.SpotifyOnDark
 
 private val DarkColorScheme = darkColorScheme(
-    primary = SpotifyGreen,
-    secondary = SpotifyGreen.copy(alpha = 0.8f),
-    tertiary = SpotifyGreen.copy(alpha = 0.6f),
-    background = SpotifyDarkBackground,
-    surface = SpotifyDarkSurface,
-    onBackground = SpotifyOnDark,
-    onSurface = SpotifyOnDark
+    primary = CustomGreen,
+    secondary = CustomGreen.copy(alpha = 0.8f),
+    tertiary = CustomGreen.copy(alpha = 0.6f),
+    background = CustomDarkBackground,
+    surface = CustomDarkSurface,
+    onBackground = CustomOnDark,
+    onSurface = CustomOnDark
 )
 
 private val LightColorScheme = lightColorScheme(

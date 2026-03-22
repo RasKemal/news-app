@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.components
+package com.example.newsapp.ui.compose.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Column

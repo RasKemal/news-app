@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ArticleRepository {
     fun getArticles(search: String?): Flow<PagingData<Article>>
-    fun getFavoriteArticles(): Flow<PagingData<Article>>
+    fun getFavoriteArticles(search: String? = null): Flow<PagingData<Article>>
     fun getArticle(id: Long): Flow<Article?>
     suspend fun setFavorite(id: Long, isFavorite: Boolean)
 }

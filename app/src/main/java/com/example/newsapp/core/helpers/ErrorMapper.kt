@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.helper
+package com.example.newsapp.core.helpers
 
 import androidx.annotation.StringRes
 import java.net.ConnectException
@@ -11,7 +11,7 @@ data class ErrorText(
     @param:StringRes val descriptionRes: Int
 )
 
-fun Throwable.toUserFriendlyText(): ErrorText {
+fun Throwable.toUIError(): ErrorText {
     return when (this) {
         is UnknownHostException,
         is ConnectException,

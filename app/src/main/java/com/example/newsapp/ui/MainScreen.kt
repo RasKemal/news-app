@@ -35,9 +35,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import com.example.newsapp.R
 
-import com.example.newsapp.ui.screens.AllArticlesScreen
-import com.example.newsapp.ui.screens.ArticleDetailScreen
-import com.example.newsapp.ui.screens.FavoritesScreen
+import com.example.newsapp.ui.compose.screens.AllArticlesScreen
+import com.example.newsapp.ui.compose.screens.ArticleDetailScreen
+import com.example.newsapp.ui.compose.screens.FavoritesScreen
 
 private const val ROUTE_ALL = "all"
 private const val ROUTE_FAVORITES = "favorites"

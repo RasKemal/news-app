@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.components
+package com.example.newsapp.ui.compose.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.newsapp.ui.helper.toUserFriendlyText
+import com.example.newsapp.core.helpers.toUIError
 
 @Composable
 fun PaginationErrorIndicator(
@@ -22,7 +22,7 @@ fun PaginationErrorIndicator(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val errorText = error.toUserFriendlyText()
+    val errorText = error.toUIError()
 
     Row(
         modifier = modifier

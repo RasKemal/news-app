@@ -52,8 +52,14 @@ class ArticleRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getFavoriteArticles(): Flow<PagingData<Article>> {
-        val pagingSourceFactory = { database.articleDao().getFavoriteArticles() }
+    override fun getFavoriteArticles(search: String?): Flow<PagingData<Article>> {
+        val pagingSourceFactory = {
+            if (search.isNullOrBlank()) {
+                database.articleDao().getFavoriteArticles()
+            } else {
+                database.articleDao().searchFavoriteArticles(search)
+            }
+        }
 
         return Pager(
             config = PagingConfig(

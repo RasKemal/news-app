@@ -1,24 +1,23 @@
-package com.example.newsapp.ui.screens
+package com.example.newsapp.ui.compose.screens
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.newsapp.ui.Tab
-import com.example.newsapp.ui.viewmodel.FavoritesViewModel
-
+import com.example.newsapp.ui.viewmodel.AllArticlesViewModel
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun FavoritesScreen(
+fun AllArticlesScreen(
     onSelectArticle: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: FavoritesViewModel = hiltViewModel()
+    val viewModel: AllArticlesViewModel = hiltViewModel()
     val userPrefs by viewModel.userPreferences.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
@@ -29,13 +28,13 @@ fun FavoritesScreen(
     }
 
     ArticleListPane(
-        tab = Tab.FAVORITES,
-        showSearch = false,
+        tab = Tab.ALL,
+        showSearch = true,
         userPreferences = userPrefs,
         searchQuery = searchQuery,
         articles = viewModel.articles,
         actions = ArticleListActions(
-            onSearchQueryChanged = {},
+            onSearchQueryChanged = viewModel::onSearchQueryChanged,
             onSelectArticle = onSelectArticle,
             onToggleFavorite = viewModel::onToggleFavorite,
             onRequestLayout = viewModel::onRequestLayout

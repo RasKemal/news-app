@@ -40,6 +40,18 @@ interface ArticleDao {
     )
     fun getFavoriteArticles(): PagingSource<Int, ArticleEntity>
 
+    // NEW: Search favorites using LIKE.
+    // Notice how we can search both title AND summary easily!
+    @Query(
+        """
+        SELECT * FROM articles
+        WHERE isFavorite = 1 
+        AND (title LIKE '%' || :search || '%' OR summary LIKE '%' || :search || '%')
+        ORDER BY publishedAt DESC
+        """
+    )
+    fun searchFavoriteArticles(search: String): PagingSource<Int, ArticleEntity>
+
     @Query("""
         DELETE FROM articles 
         WHERE isFavorite = 0 

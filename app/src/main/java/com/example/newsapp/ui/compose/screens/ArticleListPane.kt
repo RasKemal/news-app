@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.screens
+package com.example.newsapp.ui.compose.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -42,8 +42,12 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
@@ -53,14 +57,15 @@ import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.model.ArticleListLayout
 import com.example.newsapp.domain.model.UserPreferences
 import com.example.newsapp.ui.Tab
-import com.example.newsapp.ui.components.ArticleGridItem
-import com.example.newsapp.ui.components.ArticleGridPlaceholder
-import com.example.newsapp.ui.components.ArticleListItem
-import com.example.newsapp.ui.components.ArticleListPlaceholder
-import com.example.newsapp.ui.components.GenericEmptyStateLayout
-import com.example.newsapp.ui.components.PaginationErrorIndicator
-import com.example.newsapp.ui.helper.ErrorText
-import com.example.newsapp.ui.helper.toUserFriendlyText
+import com.example.newsapp.ui.compose.components.ArticleGridItem
+import com.example.newsapp.ui.compose.components.ArticleGridPlaceholder
+import com.example.newsapp.ui.compose.components.ArticleListItem
+import com.example.newsapp.ui.compose.components.ArticleListPlaceholder
+import com.example.newsapp.ui.compose.components.GenericEmptyStateLayout
+import com.example.newsapp.ui.compose.components.PaginationErrorIndicator
+import com.example.newsapp.core.helpers.ErrorText
+import com.example.newsapp.core.helpers.toUIError
+import kotlinx.coroutines.delay
 
 data class ArticleListActions(
     val onSearchQueryChanged: (String) -> Unit,
@@ -254,14 +259,8 @@ private fun ArticleListContent(
 
         // --- OVERLAYS & EMPTY STATES ---
         val isEmpty = items.itemCount == 0
-        val isTrulyEmpty = if (items.loadState.mediator != null) {
-            // For the ALL tab (Network + DB)
-            val mediatorRefresh = items.loadState.mediator?.refresh
-            mediatorRefresh is LoadState.NotLoading && mediatorRefresh.endOfPaginationReached
-        } else {
-            // For the FAVORITES tab (DB only)
-            items.loadState.source.refresh is LoadState.NotLoading && items.loadState.source.append.endOfPaginationReached
-        }
+        val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
+                items.loadState.mediator?.refresh !is LoadState.Loading
         val hasError =
             refreshState is LoadState.Error || items.loadState.mediator?.refresh is LoadState.Error
 
@@ -277,7 +276,7 @@ private fun ArticleListContent(
         } else {
             // Error Pill for background refresh failures
             if (refreshState is LoadState.Error) {
-                val errorText = refreshState.error.toUserFriendlyText()
+                val errorText = refreshState.error.toUIError()
 
                 Text(
                     text = stringResource(id = errorText.titleRes),
@@ -416,7 +415,7 @@ private fun EmptyStateOverlay(
                 val error = (refreshState as? LoadState.Error)?.error
                     ?: (items.loadState.mediator?.refresh as? LoadState.Error)?.error
 
-                val errorText = error?.toUserFriendlyText() ?: ErrorText(
+                val errorText = error?.toUIError() ?: ErrorText(
                     titleRes = R.string.error_generic_title,
                     descriptionRes = R.string.error_generic_description
                 )
@@ -440,19 +439,24 @@ private fun EmptyStateOverlay(
             isTrulyEmpty -> {
                 val trimmedQuery = query.trim()
 
-                if (tab == Tab.FAVORITES) {
-                    GenericEmptyStateLayout(
-                        iconRes = R.drawable.favorites_nodata_icon,
-                        title = "No favorites yet.",
-                        description = "Articles you pin will appear here so you can easily read them later."
-                    )
-                } else if (trimmedQuery.isNotBlank()) {
+                // 1. CHECK SEARCH FIRST! If they are typing, it's a search failure, regardless of the tab.
+                if (trimmedQuery.isNotBlank()) {
                     GenericEmptyStateLayout(
                         iconRes = R.drawable.search_nodata_icon,
                         title = "No results found.",
                         description = "We couldn't find any articles matching \"$trimmedQuery\".\nTry a different keyword."
                     )
-                } else {
+                }
+                // 2. If not searching, check if it's the Favorites tab
+                else if (tab == Tab.FAVORITES) {
+                    GenericEmptyStateLayout(
+                        iconRes = R.drawable.favorites_nodata_icon,
+                        title = "No favorites yet.",
+                        description = "Articles you pin will appear here so you can easily read them later."
+                    )
+                }
+                // 3. If not searching and on the All tab
+                else {
                     GenericEmptyStateLayout(
                         iconRes = R.drawable.all_nodata_icon,
                         title = "No news available.",
@@ -462,7 +466,8 @@ private fun EmptyStateOverlay(
             }
 
             else -> {
-                SpaceLoadingIndicator(message = "Loading articles…")
+                val message = if (query.trim().isNotBlank()) "Searching..." else "Loading articles..."
+                SpaceLoadingIndicator(message = message)
             }
         }
     }
@@ -471,19 +476,32 @@ private fun EmptyStateOverlay(
 @Composable
 private fun SpaceLoadingIndicator(
     message: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    delayMillis: Long = 250L // Wait 250ms before showing to prevent micro-flickers!
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator()
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 12.dp)
-            )
+    var showLoading by remember { mutableStateOf(false) }
+
+    // This coroutine starts the moment the indicator is requested.
+    // If the component is removed from the screen before 250ms, the coroutine
+    // is automatically cancelled and the spinner never flashes!
+    LaunchedEffect(Unit) {
+        delay(delayMillis)
+        showLoading = true
+    }
+
+    if (showLoading) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
         }
     }
 }

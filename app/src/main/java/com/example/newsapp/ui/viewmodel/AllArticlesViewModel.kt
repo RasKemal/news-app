@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.example.newsapp.core.helpers.prepareForSearch
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.model.ArticleListLayout
 import com.example.newsapp.domain.model.UserPreferences
@@ -21,10 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -50,20 +48,7 @@ class AllArticlesViewModel @Inject constructor(
                 initialValue = UserPreferences()
             )
 
-    private val searchQueryForRepo: Flow<String?> =
-        _searchQuery
-            .map { raw ->
-                val trimmed = raw.trim()
-                // FTS MATCH is sensitive to query syntax. Keep it simple: allow letters/numbers/spaces.
-                val normalized = trimmed
-                    .replace(Regex("[^\\p{L}\\p{N} ]+"), " ")
-                    .replace(Regex("\\s+"), " ")
-                    .trim()
-                normalized
-            }
-            .debounce(300)
-            .distinctUntilChanged()
-            .map { it.ifBlank { null } }
+    private val searchQueryForRepo: Flow<String?> = _searchQuery.prepareForSearch()
 
     val articles: Flow<PagingData<Article>> =
         searchQueryForRepo

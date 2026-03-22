@@ -7,7 +7,7 @@ import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
 import com.example.newsapp.data.local.NewsDatabase
 import com.example.newsapp.data.local.entity.ArticleEntity
-import com.example.newsapp.data.local.entity.ArticleRemoteKeys
+import com.example.newsapp.data.local.entity.ArticleRemoteKeysEntity
 import com.example.newsapp.data.local.entity.SearchMetadataEntity
 import com.example.newsapp.data.mapper.toEntity
 import com.example.newsapp.data.remote.ApiService
@@ -106,7 +106,7 @@ class ArticleRemoteMediator(
                 }
 
                 val keys = entities.map { entity ->
-                    ArticleRemoteKeys(
+                    ArticleRemoteKeysEntity(
                         articleId = entity.id,
                         searchQuery = searchKey,
                         prevOffset = prevOffset,

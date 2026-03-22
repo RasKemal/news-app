@@ -1,13 +1,11 @@
 package com.example.newsapp.domain.usecase
 
-import com.example.newsapp.domain.common.Result
+import com.example.newsapp.core.helpers.Result
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.repository.ArticleRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 

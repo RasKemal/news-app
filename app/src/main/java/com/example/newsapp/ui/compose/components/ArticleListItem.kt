@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.components
+package com.example.newsapp.ui.compose.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
@@ -59,23 +59,14 @@ fun ArticleListItem(
             // verticalAlignment = Alignment.CenterVertically // **Removed this!**
         ) {
             // --- IMAGE SECTION ---
-            if (!article.imageUrl.isNullOrBlank()) {
-                Box(
-                    modifier = Modifier
-                        .size(110.dp) // Fixed square size
-                        // Centered vertically relative to the entire Row content
-                        .align(Alignment.CenterVertically) // New alignment logic
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f))
-                ) {
-                    AsyncImage(
-                        model = article.imageUrl,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
+            ArticleImage(
+                imageUrl = article.imageUrl,
+                title = article.title,
+                modifier = Modifier
+                    .size(110.dp) // Fixed square size
+                    .align(Alignment.CenterVertically) // Centered vertically relative to the Row
+                    .clip(RoundedCornerShape(12.dp))
+            )
 
             // --- TEXT SECTION ---
             Column(

@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.screens
+package com.example.newsapp.ui.compose.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.newsapp.domain.model.Article
-import com.example.newsapp.ui.helper.UiState
+import com.example.newsapp.core.helpers.UiState
 
 @Composable
 fun ArticleDetailPane(

@@ -1,4 +1,4 @@
-package com.example.newsapp.ui.components
+package com.example.newsapp.ui.compose.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
@@ -52,23 +52,13 @@ fun ArticleGridItem(
     ) {
         Column {
             // --- IMAGE SECTION ---
-            if (!article.imageUrl.isNullOrBlank()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16f / 9f)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f))
-                ) {
-                    AsyncImage(
-                        model = article.imageUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
+            ArticleImage(
+                imageUrl = article.imageUrl,
+                title = article.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f) // Keeps the perfect widescreen ratio
+            )
 
             // --- TEXT SECTION ---
             Column(

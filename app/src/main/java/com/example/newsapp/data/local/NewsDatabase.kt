@@ -6,14 +6,14 @@ import com.example.newsapp.data.local.dao.ArticleDao
 import com.example.newsapp.data.local.dao.RemoteKeysDao
 import com.example.newsapp.data.local.dao.SearchMetadataDao
 import com.example.newsapp.data.local.entity.ArticleEntity
-import com.example.newsapp.data.local.entity.ArticleRemoteKeys
+import com.example.newsapp.data.local.entity.ArticleRemoteKeysEntity
 import com.example.newsapp.data.local.entity.ArticleSearchFtsEntity
 import com.example.newsapp.data.local.entity.SearchMetadataEntity
 
 @Database(
     entities = [
         ArticleEntity::class,
-        ArticleRemoteKeys::class,
+        ArticleRemoteKeysEntity::class,
         ArticleSearchFtsEntity::class,
         SearchMetadataEntity::class
     ],

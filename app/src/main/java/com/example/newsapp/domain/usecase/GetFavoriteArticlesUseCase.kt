@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 class GetFavoriteArticlesUseCase @Inject constructor(
     private val repository: ArticleRepository
 ) {
-    operator fun invoke(): Flow<PagingData<Article>> =
-        repository.getFavoriteArticles()
+    operator fun invoke(query: String? = null): Flow<PagingData<Article>> =
+        repository.getFavoriteArticles(query)
 }
 

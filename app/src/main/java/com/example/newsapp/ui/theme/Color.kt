@@ -11,7 +11,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 // Spotify-like dark theme
-val SpotifyGreen = Color(0xFF1DB954)
-val SpotifyDarkBackground = Color(0xFF121212)
-val SpotifyDarkSurface = Color(0xFF181818)
-val SpotifyOnDark = Color(0xFFEDEDED)
+val CustomGreen = Color(0xFF1DB954)
+val CustomDarkBackground = Color(0xFF121212)
+val CustomDarkSurface = Color(0xFF181818)
+val CustomOnDark = Color(0xFFEDEDED)

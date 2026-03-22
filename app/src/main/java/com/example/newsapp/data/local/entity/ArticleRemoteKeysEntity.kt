@@ -6,7 +6,7 @@ import androidx.room.Entity
     tableName = "article_remote_keys",
     primaryKeys = ["articleId", "searchQuery"]
 )
-data class ArticleRemoteKeys(
+data class ArticleRemoteKeysEntity(
     val articleId: Long,
     val searchQuery: String,
     val prevOffset: Int?,

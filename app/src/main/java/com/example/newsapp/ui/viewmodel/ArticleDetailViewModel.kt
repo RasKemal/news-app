@@ -2,11 +2,11 @@ package com.example.newsapp.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.newsapp.domain.common.Result as DomainResult
+import com.example.newsapp.core.helpers.Result as DomainResult
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.usecase.GetArticleDetailUseCase
 import com.example.newsapp.domain.usecase.ToggleFavoriteUseCase
-import com.example.newsapp.ui.helper.UiState
+import com.example.newsapp.core.helpers.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
