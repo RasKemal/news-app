@@ -51,16 +51,16 @@ fun ArticleGridItem(
             .clickable { onClick() }
     ) {
         Column {
-            // --- IMAGE SECTION ---
+            // Image Section
             ArticleImage(
                 imageUrl = article.imageUrl,
                 title = article.title,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(16f / 9f) // Keeps the perfect widescreen ratio
+                    .aspectRatio(16f / 9f)
             )
 
-            // --- TEXT SECTION ---
+            // Text Section
             Column(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -78,14 +78,14 @@ fun ArticleGridItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // --- METADATA & PIN ICON ROW ---
+                // Metadata
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom // Aligns the pin neatly with the text
+                    verticalAlignment = Alignment.Bottom
                 ) {
                     Column(
-                        modifier = Modifier.weight(1f) // Prevents long site names from squishing the pin
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             text = article.newsSite.orEmpty(),
@@ -105,14 +105,12 @@ fun ArticleGridItem(
 
                     IconButton(
                         onClick = onToggleFavorite,
-                        modifier = Modifier.size(36.dp) // Use size(36.dp) for the Grid item!
+                        modifier = Modifier.size(36.dp)
                     ) {
                         AnimatedContent(
                             targetState = article.isFavorite,
                             transitionSpec = {
-                                // When the user pins the article (false -> true)
                                 if (targetState) {
-                                    // Creates a bouncy "pop" effect
                                     (scaleIn(
                                         spring(
                                             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -121,14 +119,12 @@ fun ArticleGridItem(
                                     ) + fadeIn(tween(150))) togetherWith
                                             (scaleOut(tween(100)) + fadeOut(tween(100)))
                                 } else {
-                                    // When unpinning (true -> false), just do a quick, subtle fade/scale
                                     (scaleIn(tween(150)) + fadeIn(tween(150))) togetherWith
                                             (scaleOut(tween(150)) + fadeOut(tween(150)))
                                 }
                             },
                             label = "pinAnimation"
                         ) { isFav ->
-                            // The icon draws based on the animated 'isFav' state, NOT the raw 'article.isFavorite'
                             Icon(
                                 painter = painterResource(
                                     id = if (isFav) R.drawable.pin_filled else R.drawable.pin_outlined
@@ -156,7 +152,7 @@ fun ArticleGridPlaceholder() {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            // --- FAKE IMAGE ---
+            // FAKE IMAGE
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -164,7 +160,7 @@ fun ArticleGridPlaceholder() {
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             )
 
-            // --- FAKE TEXT SECTION ---
+            //  FAKE TEXT SECTION
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)

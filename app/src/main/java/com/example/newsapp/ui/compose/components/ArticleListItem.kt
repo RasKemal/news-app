@@ -53,38 +53,35 @@ fun ArticleListItem(
         Row(
             modifier = Modifier
                 .clickable { onClick() }
-                .padding(12.dp) // Uniform padding inside the card
-            // verticalAlignment = Alignment.CenterVertically // **Removed this!**
+                .padding(12.dp)
         ) {
-            // --- IMAGE SECTION ---
+            // Image Section
             ArticleImage(
                 imageUrl = article.imageUrl,
                 title = article.title,
                 modifier = Modifier
-                    .size(110.dp) // Fixed square size
-                    .align(Alignment.CenterVertically) // Centered vertically relative to the Row
+                    .size(110.dp)
+                    .align(Alignment.CenterVertically)
                     .clip(RoundedCornerShape(12.dp))
             )
 
-            // --- TEXT SECTION ---
+            // Text Section
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 16.dp) // Breathing room between image and text
-                    // Also centered vertically relative to the entire Row content
-                    .align(Alignment.CenterVertically), // New alignment logic
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.CenterVertically),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = article.title,
                         style = MaterialTheme.typography.titleMedium,
-                        // No maxLines! The title can grow as much as it needs to.
                     )
                     Text(
                         text = article.summary,
                         style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2, // Keeps the summary from overwhelming the card
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -106,14 +103,12 @@ fun ArticleListItem(
 
             IconButton(
                 onClick = onToggleFavorite,
-                modifier = Modifier.align(Alignment.Top) // Use size(36.dp) for the Grid item!
+                modifier = Modifier.align(Alignment.Top)
             ) {
                 AnimatedContent(
                     targetState = article.isFavorite,
                     transitionSpec = {
-                        // When the user pins the article (false -> true)
                         if (targetState) {
-                            // Creates a bouncy "pop" effect
                             (scaleIn(
                                 spring(
                                     dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -122,14 +117,12 @@ fun ArticleListItem(
                             ) + fadeIn(tween(150))) togetherWith
                                     (scaleOut(tween(100)) + fadeOut(tween(100)))
                         } else {
-                            // When unpinning (true -> false), just do a quick, subtle fade/scale
                             (scaleIn(tween(150)) + fadeIn(tween(150))) togetherWith
                                     (scaleOut(tween(150)) + fadeOut(tween(150)))
                         }
                     },
                     label = "pinAnimation"
                 ) { isFav ->
-                    // The icon draws based on the animated 'isFav' state, NOT the raw 'article.isFavorite'
                     Icon(
                         painter = painterResource(
                             id = if (isFav) R.drawable.pin_filled else R.drawable.pin_outlined
@@ -159,7 +152,7 @@ fun ArticleListPlaceholder() {
         Row(
             modifier = Modifier.padding(12.dp)
         ) {
-            // --- FAKE IMAGE ---
+            //  FAKE IMAGE
             Box(
                 modifier = Modifier
                     .size(110.dp)
@@ -167,7 +160,7 @@ fun ArticleListPlaceholder() {
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             )
 
-            // --- FAKE TEXT SECTION ---
+            // FAKE TEXT SECTION
             Column(
                 modifier = Modifier
                     .weight(1f)

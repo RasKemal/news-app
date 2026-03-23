@@ -27,17 +27,15 @@ fun ArticleImage(
     val painter = rememberAsyncImagePainter(
         model = ImageRequest.Builder(LocalContext.current)
             .data(imageUrl)
-            .crossfade(500) // Smooth 500ms fade-in when the image finally loads!
+            .crossfade(500) // Smooth 500ms fade-in
             .build()
     )
 
-    // Check the state to decide if we apply the shimmer or just a solid background
     val isLoading = painter.state is AsyncImagePainter.State.Loading
     val isError = painter.state is AsyncImagePainter.State.Error
 
     Box(
         modifier = modifier
-            // If loading, sweep the shimmer. If error/success, stay solid gray.
             .then(
                 if (isLoading) Modifier.shimmerEffect()
                 else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
@@ -45,7 +43,7 @@ fun ArticleImage(
         contentAlignment = Alignment.Center
     ) {
         if (isError) {
-            // ERROR STATE: Draw ONLY your custom PNG
+            // placeholder image
             Image(
                 painter = painterResource(id = R.drawable.no_image_placeholder),
                 contentDescription = stringResource(R.string.cd_no_image_available),
@@ -53,8 +51,6 @@ fun ArticleImage(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            // SUCCESS & LOADING STATE: Draw the Coil Image
-            // (Coil needs to be in the UI tree while loading to trigger the network request)
             Image(
                 painter = painter,
                 contentDescription = title,

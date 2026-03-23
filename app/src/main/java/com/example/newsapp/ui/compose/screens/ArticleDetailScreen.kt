@@ -97,7 +97,6 @@ private fun ArticleDetailContent(
     onToggleFavorite: (Article) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // We need the Context to launch the Share Intent!
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
