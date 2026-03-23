@@ -37,7 +37,7 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         brush = Brush.linearGradient(
             colors = listOf(
                 color,
-                color.copy(alpha = 0.4f), // The "bright" spot of the sweep
+                color.copy(alpha = 0.4f),
                 color
             ),
             start = Offset(startOffsetX, 0f),

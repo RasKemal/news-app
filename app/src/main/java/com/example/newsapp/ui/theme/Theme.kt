@@ -34,7 +34,6 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun NewsAppTheme(
     darkTheme: Boolean = true,
-    // Keep stable palette (Spotify-like) instead of dynamic colors.
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

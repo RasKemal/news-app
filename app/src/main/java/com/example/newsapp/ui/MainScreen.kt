@@ -84,20 +84,25 @@ fun MainScreen(
         }
     }
 
-    // --- ROTATION STATE HANDLER ---
-    // Smoothly hands off the detail view between the NavHost (Narrow) and the Side Pane (Wide)
+    // Rotation State Handler
     LaunchedEffect(isWide) {
+        val currentDestination = navController.currentBackStackEntry
+        val route = currentDestination?.destination?.route ?: ""
         if (isWide) {
-            // Narrow -> Wide: If user was on the detail screen, pop it and open the side pane instead
-            if (currentRoute.startsWith(ROUTE_DETAIL)) {
-                val id = navBackStackEntry?.arguments?.getString("id")?.toLongOrNull()
-                if (id != null) selectedArticleId = id
-                navController.popBackStack()
+            // Narrow -> Wide
+            if (route.startsWith(ROUTE_DETAIL)) {
+                val id = currentDestination?.arguments?.getString("id")?.toLongOrNull()
+                id?.let {
+                    selectedArticleId = it
+                    navController.popBackStack(ROUTE_ALL, inclusive = false)
+                }
             }
         } else {
-            // Wide -> Narrow: If the side pane was open, navigate to the full detail screen and close the pane
-            if (selectedArticleId != null) {
-                navController.navigate(detailRoute(selectedArticleId!!)) { launchSingleTop = true }
+            // Wide -> Narrow
+            selectedArticleId?.let { id ->
+                navController.navigate(detailRoute(id)) {
+                    launchSingleTop = true
+                }
                 selectedArticleId = null
             }
         }
@@ -113,16 +118,15 @@ fun MainScreen(
         }
     ) { innerPadding ->
 
-        // The Root Container for our responsive layout
+
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
 
-            // --- LEFT PANE (Lists) ---
-            // If the right pane is hidden, this weight(1f) takes up the WHOLE screen (Centered).
-            // If the right pane appears, this gets pushed to the left to share the 50/50 space.
+            // If right pane is hidden, this takes up the whole screen.
+            // If right pane appears, this gets pushed to the left to share space.
             Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                 NavHost(
                     navController = navController,
@@ -167,8 +171,8 @@ fun MainScreen(
                 }
             }
 
-            // --- RIGHT PANE (Detail) ---
-            // AnimatedVisibility handles the smooth slide-in, naturally pushing the left pane over.
+
+            // Handles the smooth slide-in, pushing the left pane over.
             AnimatedVisibility(
                 visible = isWide && selectedArticleId != null,
                 modifier = Modifier.weight(1f).fillMaxHeight()
