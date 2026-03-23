@@ -15,8 +15,14 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private const val DEFAULT_PAGE_SIZE = 28
+private const val DEFAULT_PAGE_SIZE = 24
 
+/**
+ * Single source of truth for Article data.
+ * * This implementation bridges the Paging 3 [Pager] with the [ArticleRemoteMediator]
+ * and provides a reactive stream of [Article] domain models. It abstracts the complexity
+ * of FTS search and paging source factory selection from the UI layer.
+ */
 class ArticleRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val database: NewsDatabase

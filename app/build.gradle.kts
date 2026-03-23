@@ -41,6 +41,11 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -76,6 +81,7 @@ dependencies {
     // Room (with KSP)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.core.ktx)
     ksp(libs.room.compiler)
 
     // Retrofit & OkHttp (with Gson converter)
@@ -89,7 +95,22 @@ dependencies {
 
     // Images
     implementation(libs.coil.compose)
+
+    // Unit tests (data layer)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.androidx.arch.core.testing)
+    testImplementation(libs.androidx.paging.testing)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.gson)
+    testImplementation(libs.retrofit)
+    testImplementation(libs.retrofit.converter.gson)
+    testImplementation(libs.okhttp.logging)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

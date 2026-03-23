@@ -6,32 +6,25 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.ui.draw.shadow
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -48,8 +41,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.paging.compose.LazyPagingItems
 import com.example.newsapp.R
 import kotlinx.coroutines.flow.Flow
@@ -63,8 +57,10 @@ import com.example.newsapp.ui.compose.components.ArticleListItem
 import com.example.newsapp.ui.compose.components.ArticleListPlaceholder
 import com.example.newsapp.ui.compose.components.GenericEmptyStateLayout
 import com.example.newsapp.ui.compose.components.PaginationErrorIndicator
+import com.example.newsapp.ui.theme.NewsAppTheme
 import com.example.newsapp.core.helpers.ErrorText
 import com.example.newsapp.core.helpers.toUIError
+import com.example.newsapp.ui.compose.components.ArticleListHeader
 import kotlinx.coroutines.delay
 
 data class ArticleListActions(
@@ -91,12 +87,12 @@ fun ArticleListPane(
 
     val refreshState = items.loadState.refresh
     val isListLayout = userPreferences.articleListLayout == ArticleListLayout.LIST
-    // We derive the refreshing state directly from Paging 3's engine!
+    // Derive the refreshing state directly from Paging 3 engine
     val isRefreshing = refreshState is LoadState.Loading && items.itemCount > 0
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // --- 1. HEADER ---
+        // HEADER
         ArticleListHeader(
             tab = tab,
             showSearch = showSearch,
@@ -106,11 +102,10 @@ fun ArticleListPane(
             onRequestLayout = actions.onRequestLayout
         )
 
-        // --- 2. CONDITIONALLY REFRESHABLE BODY ---
-        val bodyModifier = Modifier.weight(1f) // Fills the remaining vertical space
+        // CONDITIONALLY REFRESHABLE BODY
+        val bodyModifier = Modifier.weight(1f)
 
         if (tab == Tab.ALL) {
-            // NEW 1.3.0 API: Automatically handles the physics, indicators, and state
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = { items.refresh() }, // Triggers RemoteMediator LoadType.REFRESH
@@ -125,7 +120,7 @@ fun ArticleListPane(
                 )
             }
         } else {
-            // Favorites tab gets a standard Box (No pull-to-refresh physics)
+            // No refresh functionality on favorites screen
             Box(modifier = bodyModifier) {
                 ArticleListContent(
                     items = items, isListLayout = isListLayout, listState = listState,
@@ -138,10 +133,6 @@ fun ArticleListPane(
         }
     }
 }
-
-// ============================================================================
-// EXTRACTED LIST CONTENT
-// ============================================================================
 
 @Composable
 private fun ArticleListContent(
@@ -198,6 +189,7 @@ private fun ArticleListContent(
                             }
                         }
 
+                        // If pagination failed due to network
                         if (appendError != null) {
                             item(key = "append-error") {
                                 PaginationErrorIndicator(
@@ -243,7 +235,7 @@ private fun ArticleListContent(
                             }
                         }
 
-                        // 3. Add the Error Item to the bottom of the Grid!
+                        // If pagination failed due to network
                         if (appendError != null) {
                             item(key = "append-error", span = StaggeredGridItemSpan.FullLine) {
                                 PaginationErrorIndicator(
@@ -257,7 +249,7 @@ private fun ArticleListContent(
             }
         }
 
-        // --- OVERLAYS & EMPTY STATES ---
+        // OVERLAYS & EMPTY STATES
         val isEmpty = items.itemCount == 0
         val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
                 items.loadState.mediator?.refresh !is LoadState.Loading
@@ -294,106 +286,8 @@ private fun ArticleListContent(
     }
 }
 
-// ============================================================================
 // EXTRACTED SUB-COMPONENTS
-// ============================================================================
 
-@Composable
-private fun ArticleListHeader(
-    tab: Tab,
-    showSearch: Boolean,
-    searchQuery: String,
-    isListLayout: Boolean,
-    onSearchQueryChanged: (String) -> Unit,
-    onRequestLayout: (ArticleListLayout) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = if (tab == Tab.ALL) "All Articles" else "Favorite Articles",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
-
-            val shape = RoundedCornerShape(999.dp)
-            val bg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-            val glow = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
-
-            Row(
-                modifier = Modifier
-                    .shadow(elevation = 10.dp, shape = shape, ambientColor = glow, spotColor = glow)
-                    .background(bg, shape)
-                    .padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier
-                        .background(
-                            color = if (isListLayout) MaterialTheme.colorScheme.surface else bg,
-                            shape = shape
-                        )
-                        .clickable { if (!isListLayout) onRequestLayout(ArticleListLayout.LIST) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.list_icon),
-                        contentDescription = "List layout",
-                        tint = if (isListLayout) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.45f
-                        ),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .background(
-                            color = if (!isListLayout) MaterialTheme.colorScheme.surface else bg,
-                            shape = shape
-                        )
-                        .clickable { if (isListLayout) onRequestLayout(ArticleListLayout.GRID) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.gird_icon),
-                        contentDescription = "Grid layout",
-                        tint = if (!isListLayout) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
-                            alpha = 0.45f
-                        ),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        if (showSearch) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChanged,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                placeholder = { Text("Search articles…") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Search"
-                    )
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(999.dp)
-            )
-        }
-    }
-}
 
 @Composable
 private fun EmptyStateOverlay(
@@ -430,7 +324,7 @@ private fun EmptyStateOverlay(
                             onClick = { items.retry() },
                             shape = RoundedCornerShape(999.dp)
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.action_retry))
                         }
                     }
                 )
@@ -439,34 +333,41 @@ private fun EmptyStateOverlay(
             isTrulyEmpty -> {
                 val trimmedQuery = query.trim()
 
-                // 1. CHECK SEARCH FIRST! If they are typing, it's a search failure, regardless of the tab.
+                // check search failure first
                 if (trimmedQuery.isNotBlank()) {
                     GenericEmptyStateLayout(
                         iconRes = R.drawable.search_nodata_icon,
-                        title = "No results found.",
-                        description = "We couldn't find any articles matching \"$trimmedQuery\".\nTry a different keyword."
+                        title = stringResource(R.string.empty_no_results_title),
+                        description = stringResource(
+                            R.string.empty_no_results_description,
+                            trimmedQuery
+                        )
                     )
                 }
-                // 2. If not searching, check if it's the Favorites tab
+                // if not searching, check if it's the Favorites tab
                 else if (tab == Tab.FAVORITES) {
                     GenericEmptyStateLayout(
                         iconRes = R.drawable.favorites_nodata_icon,
-                        title = "No favorites yet.",
-                        description = "Articles you pin will appear here so you can easily read them later."
+                        title = stringResource(R.string.empty_no_favorites_title),
+                        description = stringResource(R.string.empty_no_favorites_description)
                     )
                 }
-                // 3. If not searching and on the All tab
+                // if not searching and on the All tab
                 else {
                     GenericEmptyStateLayout(
                         iconRes = R.drawable.all_nodata_icon,
-                        title = "No news available.",
-                        description = "There are currently no articles published.\nPull down to refresh and check again."
+                        title = stringResource(R.string.empty_no_news_title),
+                        description = stringResource(R.string.empty_no_news_description)
                     )
                 }
             }
 
             else -> {
-                val message = if (query.trim().isNotBlank()) "Searching..." else "Loading articles..."
+                val message = if (query.trim().isNotBlank()) {
+                    stringResource(R.string.loading_searching)
+                } else {
+                    stringResource(R.string.loading_articles)
+                }
                 SpaceLoadingIndicator(message = message)
             }
         }
@@ -477,15 +378,14 @@ private fun EmptyStateOverlay(
 private fun SpaceLoadingIndicator(
     message: String,
     modifier: Modifier = Modifier,
-    delayMillis: Long = 250L // Wait 250ms before showing to prevent micro-flickers!
+    delayMillis: Long = 250L // delay for 250ms to prevent the loading spinner from flickering on fast connections
 ) {
-    var showLoading by remember { mutableStateOf(false) }
+    val isPreview = LocalInspectionMode.current
+    var showLoading by remember { mutableStateOf(isPreview) }
 
-    // This coroutine starts the moment the indicator is requested.
-    // If the component is removed from the screen before 250ms, the coroutine
-    // is automatically cancelled and the spinner never flashes!
     LaunchedEffect(Unit) {
-        delay(delayMillis)
+        val effectiveDelay = if (isPreview) 0L else delayMillis
+        delay(effectiveDelay)
         showLoading = true
     }
 
@@ -501,6 +401,93 @@ private fun SpaceLoadingIndicator(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 12.dp)
                 )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ArticleListPanePreviewAllList() {
+    NewsAppTheme(darkTheme = true) {
+        val previewArticles = listOf(
+            Article(
+                id = 1L,
+                title = "Starship static fire completed",
+                summary = "SpaceX completed another successful static fire test ahead of the next launch window.",
+                url = "https://example.com/1",
+                imageUrl = null,
+                newsSite = "Space.com",
+                publishedAt = "Mar 19, 2026 • 11:30",
+                isFavorite = false
+            ),
+            Article(
+                id = 2L,
+                title = "NASA publishes new Artemis roadmap",
+                summary = "The latest roadmap outlines mission cadence and lunar surface operations updates.",
+                url = "https://example.com/2",
+                imageUrl = null,
+                newsSite = "NASA",
+                publishedAt = "Mar 19, 2026 • 09:10",
+                isFavorite = true
+            )
+        )
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                ArticleListHeader(
+                    tab = Tab.ALL,
+                    showSearch = true,
+                    searchQuery = "",
+                    isListLayout = true,
+                    onSearchQueryChanged = {},
+                    onRequestLayout = {}
+                )
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(previewArticles.size) { index ->
+                        val article = previewArticles[index]
+                        ArticleListItem(
+                            article = article,
+                            onClick = {},
+                            onToggleFavorite = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun ArticleListPanePreviewFavoritesEmpty() {
+    NewsAppTheme(darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                ArticleListHeader(
+                    tab = Tab.FAVORITES,
+                    showSearch = true,
+                    searchQuery = "",
+                    isListLayout = false,
+                    onSearchQueryChanged = {},
+                    onRequestLayout = {}
+                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    GenericEmptyStateLayout(
+                        iconRes = R.drawable.favorites_nodata_icon,
+                        title = stringResource(R.string.empty_no_favorites_title),
+                        description = stringResource(R.string.empty_no_favorites_description)
+                    )
+                }
             }
         }
     }

@@ -23,8 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.newsapp.R
+import com.example.newsapp.ui.theme.NewsAppTheme
 
 @Composable
 fun DetailFavoriteButton(
@@ -52,7 +55,11 @@ fun DetailFavoriteButton(
         ) { isFav ->
             Icon(
                 painter = painterResource(id = if (isFav) R.drawable.pin_filled else R.drawable.pin_outlined),
-                contentDescription = if (isFav) "Unpin article" else "Pin article",
+                contentDescription = if (isFav) {
+                    stringResource(R.string.cd_unpin_article)
+                } else {
+                    stringResource(R.string.cd_pin_article)
+                },
                 tint = if (isFav) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(28.dp)
             )
@@ -61,9 +68,25 @@ fun DetailFavoriteButton(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Pin to Favorites",
+            text = stringResource(R.string.action_pin_to_favorites),
             style = MaterialTheme.typography.labelMedium,
             color = if (isPinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DetailFavoriteButtonPreviewPinned() {
+    NewsAppTheme(darkTheme = true) {
+        DetailFavoriteButton(isPinned = true, onClick = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DetailFavoriteButtonPreviewUnpinned() {
+    NewsAppTheme(darkTheme = true) {
+        DetailFavoriteButton(isPinned = false, onClick = {})
     }
 }

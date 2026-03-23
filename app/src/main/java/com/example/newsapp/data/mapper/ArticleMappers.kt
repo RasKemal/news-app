@@ -1,5 +1,7 @@
 package com.example.newsapp.data.mapper
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.newsapp.data.local.entity.ArticleEntity
 import com.example.newsapp.data.remote.dto.ArticleDto
 import com.example.newsapp.domain.model.Article
@@ -20,6 +22,7 @@ fun ArticleDto.toEntity(isFavorite: Boolean = false): ArticleEntity =
         isFavorite = isFavorite
     )
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun ArticleEntity.toDomain(): Article =
     Article(
         id = id,
@@ -32,13 +35,14 @@ fun ArticleEntity.toDomain(): Article =
         isFavorite = isFavorite
     )
 
-private fun String.normalizeSummary(): String =
+fun String.normalizeSummary(): String =
     lineSequence()
-        .dropWhile { it.isBlank() }
+        .filterNot { it.isBlank() }
         .joinToString(separator = " ")
         .trim()
 
-private fun formatPublishedAt(raw: String): String {
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatPublishedAt(raw: String): String {
     return try {
         val parsed = OffsetDateTime.parse(raw)
         val formatter = DateTimeFormatter.ofPattern("MMM d, uuuu • HH:mm")

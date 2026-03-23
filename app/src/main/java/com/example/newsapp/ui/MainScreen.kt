@@ -32,12 +32,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.newsapp.R
+import com.example.newsapp.core.helpers.asString
 
 import com.example.newsapp.ui.compose.screens.AllArticlesScreen
 import com.example.newsapp.ui.compose.screens.ArticleDetailScreen
 import com.example.newsapp.ui.compose.screens.FavoritesScreen
+import com.example.newsapp.ui.viewmodel.MainViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 private const val ROUTE_ALL = "all"
 private const val ROUTE_FAVORITES = "favorites"
@@ -48,11 +55,14 @@ private fun detailRoute(id: Long): String = "$ROUTE_DETAIL/$id"
 enum class Tab { ALL, FAVORITES }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    mainViewModel: MainViewModel = hiltViewModel()
+) {
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
     val isWide = rememberWideLayout()
-
+    val userPreferences by mainViewModel.userPreferences.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = remember(navBackStackEntry) {
         navBackStackEntry?.destination?.route ?: ROUTE_ALL
@@ -66,6 +76,12 @@ fun MainScreen() {
 
     selectedArticleId?.let { safeId ->
         displayArticleId = safeId
+    }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.snackbarMessages.collectLatest { message ->
+            snackbarHostState.showSnackbar(message.asString(context))
+        }
     }
 
     // --- ROTATION STATE HANDLER ---
@@ -115,6 +131,8 @@ fun MainScreen() {
                 ) {
                     composable(ROUTE_ALL) {
                         AllArticlesScreen(
+                            userPreferences = userPreferences,
+                            onRequestLayout = mainViewModel::setLayout,
                             onSelectArticle = { id ->
                                 if (isWide) selectedArticleId = id
                                 else navController.navigate(detailRoute(id))
@@ -124,6 +142,8 @@ fun MainScreen() {
                     }
                     composable(ROUTE_FAVORITES) {
                         FavoritesScreen(
+                            userPreferences = userPreferences,
+                            onRequestLayout = mainViewModel::setLayout,
                             onSelectArticle = { id ->
                                 if (isWide) selectedArticleId = id
                                 else navController.navigate(detailRoute(id))
@@ -175,14 +195,24 @@ private fun BottomBar(
         NavigationBarItem(
             selected = currentTab == Tab.ALL,
             onClick = { navController.navigate(ROUTE_ALL) { launchSingleTop = true } },
-            icon = { Icon(painter = painterResource(R.drawable.all_icon), contentDescription = "All articles") },
-            label = { Text("All") }
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.all_icon),
+                    contentDescription = stringResource(R.string.cd_all_articles)
+                )
+            },
+            label = { Text(stringResource(R.string.label_all)) }
         )
         NavigationBarItem(
             selected = currentTab == Tab.FAVORITES,
             onClick = { navController.navigate(ROUTE_FAVORITES) { launchSingleTop = true } },
-            icon = { Icon(painter = painterResource(R.drawable.pin_filled), contentDescription = "Favorites") },
-            label = { Text("Favorites") }
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.pin_filled),
+                    contentDescription = stringResource(R.string.cd_favorites)
+                )
+            },
+            label = { Text(stringResource(R.string.label_favorites)) }
         )
     }
 }

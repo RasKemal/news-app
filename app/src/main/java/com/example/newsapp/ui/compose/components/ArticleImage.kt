@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -47,7 +48,7 @@ fun ArticleImage(
             // ERROR STATE: Draw ONLY your custom PNG
             Image(
                 painter = painterResource(id = R.drawable.no_image_placeholder),
-                contentDescription = "No image available",
+                contentDescription = stringResource(R.string.cd_no_image_available),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )

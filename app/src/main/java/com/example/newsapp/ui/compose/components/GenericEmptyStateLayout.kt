@@ -14,8 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.newsapp.R
+import com.example.newsapp.ui.theme.NewsAppTheme
 
 @Composable
 fun GenericEmptyStateLayout(
@@ -54,5 +57,17 @@ fun GenericEmptyStateLayout(
             Spacer(modifier = Modifier.height(24.dp))
             actionButton()
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GenericEmptyStateLayoutPreview() {
+    NewsAppTheme(darkTheme = true) {
+        GenericEmptyStateLayout(
+            iconRes = R.drawable.search_nodata_icon,
+            title = "No results found.",
+            description = "Try another keyword or clear search."
+        )
     }
 }

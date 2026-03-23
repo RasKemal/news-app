@@ -13,8 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.newsapp.R
 import com.example.newsapp.core.helpers.toUIError
+import com.example.newsapp.ui.theme.NewsAppTheme
 
 @Composable
 fun PaginationErrorIndicator(
@@ -42,9 +45,20 @@ fun PaginationErrorIndicator(
 
         TextButton(onClick = onRetry) {
             Text(
-                text = "Retry",
+                text = stringResource(R.string.action_retry),
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PaginationErrorIndicatorPreview() {
+    NewsAppTheme(darkTheme = true) {
+        PaginationErrorIndicator(
+            error = RuntimeException("Network error"),
+            onRetry = {}
+        )
     }
 }

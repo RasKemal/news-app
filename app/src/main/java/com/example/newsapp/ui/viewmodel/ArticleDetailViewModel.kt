@@ -2,7 +2,9 @@ package com.example.newsapp.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.newsapp.R
 import com.example.newsapp.core.helpers.Result as DomainResult
+import com.example.newsapp.core.helpers.UiText
 import com.example.newsapp.domain.model.Article
 import com.example.newsapp.domain.usecase.GetArticleDetailUseCase
 import com.example.newsapp.domain.usecase.ToggleFavoriteUseCase
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,7 +35,8 @@ class ArticleDetailViewModel @Inject constructor(
 
     private val _articleId = MutableStateFlow<Long?>(null)
     private val _retryToken = MutableStateFlow(0)
-    private val _snackbarMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    private val _snackbarMessages = MutableSharedFlow<UiText>(extraBufferCapacity = 1)
+    val snackbarMessages = _snackbarMessages.asSharedFlow()
 
     val detailUiState: StateFlow<UiState<Article>> =
         combine(_articleId, _retryToken) { id, _ -> id }
@@ -68,7 +72,10 @@ class ArticleDetailViewModel @Inject constructor(
             try {
                 toggleFavoriteUseCase(article.id, !article.isFavorite)
             } catch (t: Throwable) {
-                _snackbarMessages.emit(t.message ?: "Failed to update favorite")
+                _snackbarMessages.emit(
+                    t.message?.let { UiText.DynamicString(it) }
+                        ?: UiText.StringResource(R.string.error_update_favorite_failed)
+                )
             }
         }
     }

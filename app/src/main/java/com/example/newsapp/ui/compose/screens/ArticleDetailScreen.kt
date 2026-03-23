@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +40,7 @@ import com.example.newsapp.ui.compose.components.DetailFavoriteButton
 import com.example.newsapp.ui.compose.components.DetailShareButton
 import com.example.newsapp.ui.compose.components.GenericEmptyStateLayout
 import com.example.newsapp.ui.viewmodel.ArticleDetailViewModel
+import com.example.newsapp.ui.theme.NewsAppTheme
 
 @Composable
 fun ArticleDetailScreen(
@@ -62,15 +65,15 @@ fun ArticleDetailScreen(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 GenericEmptyStateLayout(
                     iconRes = R.drawable.network_error_icon,
-                    title = "Could not load article detail",
-                    description = "Try again.",
+                    title = stringResource(R.string.article_detail_error_title),
+                    description = stringResource(R.string.article_detail_error_description),
                     iconTint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
                     actionButton = {
                         Button(
                             onClick = viewModel::retry,
                             shape = RoundedCornerShape(999.dp)
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.action_retry))
                         }
                     }
                 )
@@ -103,7 +106,6 @@ private fun ArticleDetailContent(
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        // --- 1. TOP BAR ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -113,13 +115,12 @@ private fun ArticleDetailContent(
             IconButton(onClick = onBack) {
                 Icon(
                     painter = painterResource(id = R.drawable.detail_close_icon),
-                    contentDescription = "Close",
+                    contentDescription = stringResource(R.string.cd_close),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
 
-        // --- 2. HEADER IMAGE ---
         ArticleImage(
             imageUrl = article.imageUrl,
             title = article.title,
@@ -128,7 +129,6 @@ private fun ArticleDetailContent(
                 .aspectRatio(16f / 9f)
         )
 
-        // --- 3. TEXT CONTENT ---
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = article.title,
@@ -136,7 +136,6 @@ private fun ArticleDetailContent(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // METADATA: Stacked Site and Date
             Column(modifier = Modifier.padding(bottom = 16.dp)) {
                 if (!article.newsSite.isNullOrBlank()) {
                     Text(
@@ -162,7 +161,6 @@ private fun ArticleDetailContent(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // --- 4. ACTION BUTTONS ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -177,16 +175,43 @@ private fun ArticleDetailContent(
                         val sendIntent = Intent().apply {
                             action = Intent.ACTION_SEND
                             putExtra(Intent.EXTRA_TITLE, article.title)
-                            putExtra(Intent.EXTRA_TEXT, "${article.title}\n\nRead more at: ${article.url}")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                context.getString(R.string.share_article_message, article.title, article.url)
+                            )
                             type = "text/plain"
                         }
-                        val shareIntent = Intent.createChooser(sendIntent, "Share Article")
+                        val shareIntent = Intent.createChooser(
+                            sendIntent,
+                            context.getString(R.string.share_article_chooser_title)
+                        )
                         context.startActivity(shareIntent)
                     }
                 )
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun ArticleDetailContentPreview() {
+    NewsAppTheme(darkTheme = true) {
+        ArticleDetailContent(
+            article = Article(
+                id = 1L,
+                title = "Falcon 9 launches new payload",
+                summary = "SpaceX successfully launched a new payload to orbit after a smooth countdown and nominal ascent profile.",
+                url = "https://example.com/article/1",
+                imageUrl = null,
+                newsSite = "SpaceNews",
+                publishedAt = "Mar 19, 2026 • 12:00",
+                isFavorite = false
+            ),
+            onBack = {},
+            onToggleFavorite = {}
+        )
     }
 }
 

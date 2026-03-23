@@ -13,6 +13,14 @@ import com.example.newsapp.data.mapper.toEntity
 import com.example.newsapp.data.remote.ApiService
 import com.example.newsapp.data.remote.dto.ArticleDto
 
+
+/**
+ * Orchestrates the synchronization between the remote [ApiService] and local [NewsDatabase].
+ *
+ * This mediator implements a "Network-Direct-to-Database" strategy. It supports:
+ * 1. **Cache Invalidation:** Logic in [initialize] skips remote refreshes if data is < 1 hour old.
+ * 2. **Search Support:** Handles both global news and favorite search queries.
+ */
 @OptIn(ExperimentalPagingApi::class)
 class ArticleRemoteMediator(
     private val search: String?,
@@ -24,21 +32,12 @@ class ArticleRemoteMediator(
     private val CACHE_TIMEOUT_MILLIS = 1000L * 60L * 60L
 
     override suspend fun initialize(): InitializeAction {
-        // Offline-first: if we already have mediator state for this query, skip the initial refresh so
-        // the UI can immediately render cached Room data (and avoid blocking with network errors).
 
         val searchKey = search.orEmpty()
-
-        // 1. Grab the time we last successfully fetched this exact search
         val lastRefreshTime = database.searchMetadataDao().getLastRefreshTime(searchKey) ?: 0L
-
-        // 2. Check if it has been longer than our 1-hour limit
         val isCacheExpired = System.currentTimeMillis() - lastRefreshTime > CACHE_TIMEOUT_MILLIS
-
-        // 3. Check if we actually have data to show
         val hasRemoteKeys = database.remoteKeysDao().hasRemoteKeysForQuery(searchKey)
 
-        // 4. THE DECISION: Only skip the network if the cache is BOTH fresh AND exists
         return if (!isCacheExpired && hasRemoteKeys) {
             InitializeAction.SKIP_INITIAL_REFRESH
         } else {
