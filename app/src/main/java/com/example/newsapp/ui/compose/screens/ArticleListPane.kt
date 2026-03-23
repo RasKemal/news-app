@@ -251,21 +251,26 @@ private fun ArticleListContent(
 
         // OVERLAYS & EMPTY STATES
         val isEmpty = items.itemCount == 0
+        val isMediatorLoading = items.loadState.mediator?.refresh is LoadState.Loading
+        val isSourceLoading = items.loadState.source.refresh is LoadState.Loading
+        val isLoading = isMediatorLoading || isSourceLoading
         val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
                 items.loadState.mediator?.refresh !is LoadState.Loading
         val hasError =
             refreshState is LoadState.Error || items.loadState.mediator?.refresh is LoadState.Error
 
+
         if (isEmpty) {
             EmptyStateOverlay(
                 hasError = hasError,
+                isLoading = isLoading,
                 isTrulyEmpty = isTrulyEmpty,
                 refreshState = refreshState,
                 items = items,
                 tab = tab,
                 query = searchQuery
             )
-        } else {
+        } else if(hasError && !isLoading) {
             // Error Pill for background refresh failures
             if (refreshState is LoadState.Error) {
                 val errorText = refreshState.error.toUIError()
@@ -292,6 +297,7 @@ private fun ArticleListContent(
 @Composable
 private fun EmptyStateOverlay(
     hasError: Boolean,
+    isLoading: Boolean,
     isTrulyEmpty: Boolean,
     refreshState: LoadState,
     items: LazyPagingItems<Article>,
@@ -305,6 +311,14 @@ private fun EmptyStateOverlay(
         contentAlignment = Alignment.Center
     ) {
         when {
+            isLoading -> {
+                val message = if (query.trim().isNotBlank()) {
+                    stringResource(R.string.loading_searching)
+                } else {
+                    stringResource(R.string.loading_articles)
+                }
+                SpaceLoadingIndicator(message = message)
+            }
             hasError -> {
                 val error = (refreshState as? LoadState.Error)?.error
                     ?: (items.loadState.mediator?.refresh as? LoadState.Error)?.error

@@ -26,8 +26,6 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): NewsDatabase =
         Room.databaseBuilder(context, NewsDatabase::class.java, DB_NAME)
-            // FTS4 addition changes the schema. For the assessment environment we can safely reset
-            // local cache instead of writing a complex migration for the virtual table.
             .fallbackToDestructiveMigration()
             .build()
 
