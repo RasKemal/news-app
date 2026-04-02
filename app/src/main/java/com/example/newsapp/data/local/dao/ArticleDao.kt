@@ -13,20 +13,10 @@ interface ArticleDao {
 
     @Query(
         """
-        SELECT * FROM articles
-        ORDER BY publishedAt DESC
-        """
-    )
-    fun getArticles(): PagingSource<Int, ArticleEntity>
-
-    @Query(
-        """
-        SELECT * FROM articles
-        WHERE id IN (
-            SELECT rowid FROM ArticleSearchFtsEntity
-            WHERE ArticleSearchFtsEntity MATCH :search
-        )
-        ORDER BY publishedAt DESC
+        SELECT articles.* FROM articles
+        INNER JOIN article_remote_keys ON articles.id = article_remote_keys.articleId
+        WHERE article_remote_keys.searchQuery = :search
+        ORDER BY articles.publishedAt DESC
         """
     )
     fun searchArticles(search: String): PagingSource<Int, ArticleEntity>
@@ -40,14 +30,13 @@ interface ArticleDao {
     )
     fun getFavoriteArticles(): PagingSource<Int, ArticleEntity>
 
-    // NEW: Search favorites using LIKE.
-    // Notice how we can search both title AND summary easily!
     @Query(
         """
-        SELECT * FROM articles
-        WHERE isFavorite = 1 
-        AND (title LIKE '%' || :search || '%' OR summary LIKE '%' || :search || '%')
-        ORDER BY publishedAt DESC
+        SELECT articles.* FROM articles
+        JOIN ArticleSearchFtsEntity ON articles.id = ArticleSearchFtsEntity.rowid
+        WHERE articles.isFavorite = 1 
+        AND ArticleSearchFtsEntity MATCH :search
+        ORDER BY articles.publishedAt DESC
         """
     )
     fun searchFavoriteArticles(search: String): PagingSource<Int, ArticleEntity>
@@ -55,11 +44,9 @@ interface ArticleDao {
     @Query("""
         DELETE FROM articles 
         WHERE isFavorite = 0 
-        AND id IN (
-            SELECT articleId FROM article_remote_keys WHERE searchQuery = :searchQuery
-        )
-    """)
-    suspend fun clearNonFavoriteArticlesByQuery(searchQuery: String)
+        AND id NOT IN (SELECT articleId FROM article_remote_keys)
+        """)
+    suspend fun clearOrphanedNonFavoriteArticles()
 
     @Query("SELECT * FROM articles WHERE id = :id LIMIT 1")
     fun observeArticleById(id: Long): Flow<ArticleEntity?>

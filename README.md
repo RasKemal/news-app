@@ -17,13 +17,13 @@ The application follows Clean Architecture principles, separating concerns into 
 * **Resource Separation:** Separate OkHttpClient instances are provided for API data and Image loading. This ensures that heavy image traffic does not interfere with critical metadata synchronization.
 
 ### Data Persistence and Search
-* **Full-Text Search (FTS4):** The local database uses SQLite FTS4 virtual tables to provide keyword searching across article titles and summaries. Search functionality remains operational while the device is offline.
+* **Dual Search Strategy & FTS4:** The application employs a context-aware search strategy. Global searches strictly map to API responses using remote keys, while searching through locally saved favorites utilizes SQLite FTS4 virtual tables for blazing-fast, offline keyword matching.
 * **Transactional Integrity:** Cache resets during refresh signals are performed within Room Transactions. This prevents partial data states and ensures that user-favorited articles are preserved during cache invalidation.
 
 ### UI and State Management
 * **Unidirectional Data Flow (UDF):** ViewModels expose immutable state via StateFlow, while UI components remain stateless and communicate user intents through lambda-based callbacks.
 * **Centralized State Hoisting:** Hoisting to the MainViewModel and MainScreen manages navigation, responsive layouts, and user preferences. This centralized ownership ensures state consistency across different screen configurations.
-* **Adaptive Navigation:** The MainScreen manages the hand-off logic between phone and tablet layouts. Hoisted navigation state ensures that the detail view remains synchronized during orientation changes or transitions between the standard backstack and the split-pane view.
+* **Adaptive List-Detail Pane (Mobile & Tablet):** The UI dynamically scales between a standard navigation backstack for mobile phones and a side-by-side List-Detail layout for tablets and larger screens. Hoisted navigation state ensures the selected article remains perfectly synchronized during orientation changes, window resizing, or transitions between layout modes
 * **Input Optimization:** Search queries are processed through a reactive pipeline utilizing a debounce and a filter. This optimizes resource usage by preventing redundant network and database operations during active user input.
 
 ## Testing Strategy

@@ -336,6 +336,35 @@ class ArticleRemoteMediatorTest {
         assertEquals(searchKey, keys.searchQuery)
     }
 
+    @Test
+    fun `REFRESH only deletes articles that have no remaining remote keys`() = runBlocking {
+        val globalArticle = ArticleEntity(1L, "Global", "", "", null, "", "", false)
+        val marsArticle = ArticleEntity(2L, "Mars", "", "", null, "", "", false)
+        database.articleDao().insertAll(listOf(globalArticle, marsArticle))
+
+        database.remoteKeysDao().insertAll(listOf(
+            ArticleRemoteKeysEntity(1L, "", null, 24),
+            ArticleRemoteKeysEntity(2L, "Mars", null, 24)
+        ))
+
+        coEvery { apiService.getArticles(any(), any(), search = "") } returns NewsResponse(
+            count = 0, next = null, previous = null, results = emptyList()
+        )
+
+        val mediator = ArticleRemoteMediator("", apiService, database, pageSize)
+        mediator.load(LoadType.REFRESH, emptyPagingState())
+
+        val remainingGlobal = database.articleDao().getArticlesByIds(listOf(1L))
+        val remainingMars = database.articleDao().getArticlesByIds(listOf(2L))
+
+        assertTrue("Global article should have been deleted", remainingGlobal.isEmpty())
+        assertTrue("Mars article should have survived", remainingMars.isNotEmpty())
+    }
+
+
+
+
+
     private fun emptyPagingState(): PagingState<Int, ArticleEntity> =
         PagingState(
             pages = emptyList(),

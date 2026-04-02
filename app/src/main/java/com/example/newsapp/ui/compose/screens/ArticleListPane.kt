@@ -254,8 +254,12 @@ private fun ArticleListContent(
         val isMediatorLoading = items.loadState.mediator?.refresh is LoadState.Loading
         val isSourceLoading = items.loadState.source.refresh is LoadState.Loading
         val isLoading = isMediatorLoading || isSourceLoading
-        val isTrulyEmpty = items.loadState.source.refresh is LoadState.NotLoading &&
-                items.loadState.mediator?.refresh !is LoadState.Loading
+        val isTrulyEmpty = if (tab == Tab.FAVORITES) {
+            items.loadState.source.refresh is LoadState.NotLoading
+        } else {
+            items.loadState.source.refresh is LoadState.NotLoading &&
+                    items.loadState.mediator?.refresh is LoadState.NotLoading
+        }
         val hasError =
             refreshState is LoadState.Error || items.loadState.mediator?.refresh is LoadState.Error
 

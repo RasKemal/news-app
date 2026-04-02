@@ -31,11 +31,7 @@ class ArticleRepositoryImpl @Inject constructor(
     @OptIn(ExperimentalPagingApi::class)
     override fun getArticles(search: String?): Flow<PagingData<Article>> {
         val pagingSourceFactory = {
-            if (search.isNullOrBlank()) {
-                database.articleDao().getArticles()
-            } else {
-                database.articleDao().searchArticles(search)
-            }
+            database.articleDao().searchArticles(search.orEmpty())
         }
 
         return Pager(

@@ -14,7 +14,7 @@
     <string name="cd_pin_article">Pin article</string>
     <string name="action_pin_to_favorites">Pin to Favorites</string>
     <string name="article_detail_error_title">Could not load article detail</string>
-    <string name="article_detail_error_description">Try again.</string>
+    <string name="article_detail_error_description">Go back.</string>
     <string name="action_retry">Retry</string>
     <string name="cd_close">Close</string>
     <string name="share_article_message">%1$s\n\nRead more at: %2$s</string>

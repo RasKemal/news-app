@@ -82,7 +82,7 @@ class ArticleRemoteMediator(
 
                 if (loadType == LoadType.REFRESH) {
                     remoteKeysDao.clearRemoteKeysForQuery(searchKey)
-                    articleDao.clearNonFavoriteArticlesByQuery(searchKey)
+                    articleDao.clearOrphanedNonFavoriteArticles()
                     searchMetadataDao.insert(
                         SearchMetadataEntity(
                             searchKey,

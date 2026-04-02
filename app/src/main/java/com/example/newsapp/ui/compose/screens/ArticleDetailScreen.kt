@@ -55,6 +55,7 @@ fun ArticleDetailScreen(
         viewModel.setArticleId(articleId)
     }
 
+
     when (uiState) {
         is UiState.Loading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -64,16 +65,13 @@ fun ArticleDetailScreen(
         is UiState.Error -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 GenericEmptyStateLayout(
-                    iconRes = R.drawable.network_error_icon,
+                    iconRes = R.drawable.all_nodata_icon,
                     title = stringResource(R.string.article_detail_error_title),
                     description = stringResource(R.string.article_detail_error_description),
                     iconTint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
                     actionButton = {
-                        Button(
-                            onClick = viewModel::retry,
-                            shape = RoundedCornerShape(999.dp)
-                        ) {
-                            Text(stringResource(R.string.action_retry))
+                        Button(onClick = onBack) {
+                            Text(stringResource(R.string.article_detail_error_description))
                         }
                     }
                 )
