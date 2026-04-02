@@ -6,19 +6,19 @@ A persistent Android application built for the Spaceflight News API (v4). This p
 
 * **General Feed:** Demonstrates smooth, infinite scrolling powered by Paging 3 and the RemoteMediator.
   <br>
-  <video src="https://github-production-user-asset-6210df.s3.amazonaws.com/88666830/573005147-7d93ec0c-1d59-43a6-a9f8-309903abe95b.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20260402%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260402T101345Z&X-Amz-Expires=300&X-Amz-Signature=7187fb0a59e020c95e1a7832ecda5cb8cb4d463996470e124f780ac1e1c8b331&X-Amz-SignedHeaders=host" width="250" autoplay loop muted playsinline></video>
+  <video src="https://github.com/user-attachments/assets/7d93ec0c-1d59-43a6-a9f8-309903abe95b" width="200" autoplay loop muted playsinline></video>
 
 * **Offline-First Synchronization:** Loads instantly from the Room cache without a network connection, followed by a network sync.
   <br>
-  <video src="https://github-production-user-asset-6210df.s3.amazonaws.com/88666830/573005150-79308941-3800-47f8-be48-aa0a0ae7618e.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20260402%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260402T101439Z&X-Amz-Expires=300&X-Amz-Signature=96782739c12584000c42c9c5b2c05b9ac6a95cae0d0e6dc4b0e3d2561641f439&X-Amz-SignedHeaders=host" width="250" autoplay loop muted playsinline></video>
+  <video src="https://github.com/user-attachments/assets/79308941-3800-47f8-be48-aa0a0ae7618e" width="200" autoplay loop muted playsinline></video>
 
 * **Reactive Search:** Utilizes a debounced pipeline that routes queries. It performs remote API pagination with remote-key mapping for the global feed, and instant offline SQLite Full-Text Search (FTS4) for saved favorites.
   <br>
-  <video src="https://github-production-user-asset-6210df.s3.amazonaws.com/88666830/573005148-1c5b3d7e-ec9d-454e-9010-cde164dc9e38.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20260402%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260402T101747Z&X-Amz-Expires=300&X-Amz-Signature=78a7604458283999fc16800a0ff5492f5f2d51745c5182ee1e053d755b6f1472&X-Amz-SignedHeaders=host" width="250" autoplay loop muted playsinline></video>
+  <video src="https://github.com/user-attachments/assets/1c5b3d7e-ec9d-454e-9010-cde164dc9e38" width="200" autoplay loop muted playsinline></video>
 
 * **Adaptive Layout (Tablet/Mobile):** The UI dynamically scales into a side-by-side List-Detail pane on larger screens, maintaining navigation state.
   <br>
-  <video src="https://github-production-user-asset-6210df.s3.amazonaws.com/88666830/573005149-2bc3e04c-8341-42ea-a21f-ba0a82816e2a.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20260402%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260402T101818Z&X-Amz-Expires=300&X-Amz-Signature=6ca759290e740aa14bfc647f245c827b18d5b365304cc69ed13ab087ed8a9ad3&X-Amz-SignedHeaders=host" width="500" autoplay loop muted playsinline></video>
+  <video src="https://github.com/user-attachments/assets/e503f78f-04e1-499f-9bc4-cf33ad20fb21" width="400" autoplay loop muted playsinline></video>
 
 ## Architecture and Design Patterns
 The application follows Clean Architecture principles, separating concerns into three distinct layers:
